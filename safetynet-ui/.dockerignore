@@ -1,0 +1,10 @@
+node_modules
+dist
+dist-ssr
+.vite
+*.log
+az
+set
+.env
+.env.*
+!.env.example
