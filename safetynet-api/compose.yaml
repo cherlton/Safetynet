@@ -1,0 +1,40 @@
+services:
+  postgres:
+    image: 'postgis/postgis:16-3.4'
+    environment:
+      - 'POSTGRES_DB=crime'
+      - 'POSTGRES_PASSWORD=postgres'
+      - 'POSTGRES_USER=postgres'
+    ports:
+      - '5432:5432'
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d crime"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  pgadmin:
+    image: dpage/pgadmin4
+    environment:
+      - 'PGADMIN_DEFAULT_EMAIL=admin@safetynet.com'
+      - 'PGADMIN_DEFAULT_PASSWORD=admin'
+    ports:
+      - '5050:80'
+
+  app:
+    build: .
+    ports:
+      - '8080:8080'
+    environment:
+      - 'SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/crime'
+      - 'SPRING_DATASOURCE_USERNAME=postgres'
+      - 'SPRING_DATASOURCE_PASSWORD=postgres'
+      - 'ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}'
+      - 'ANTHROPIC_MODEL=${ANTHROPIC_MODEL}'
+      - 'GEMINI_API_KEY=${GEMINI_API_KEY}'
+      - 'GEMINI_MODEL=${GEMINI_MODEL}'
+      - 'TWILIO_AUTH_TOKEN=${TWILIO_AUTH_TOKEN}'
+      - 'TWILIO_VALIDATION_ENABLED=${TWILIO_VALIDATION_ENABLED}'
+    depends_on:
+      postgres:
+        condition: service_healthy

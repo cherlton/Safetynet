@@ -1,0 +1,30 @@
+# Environment secrets
+.env
+.env.*
+!.env.example
+
+# Logs
+*.log
+logs/
+
+# OS/editor files
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+
+# Java / Maven backend
+safetynet-api/target/
+safetynet-api/.mvn/wrapper/maven-wrapper.jar
+
+# Node / Vite frontend
+safetynet-ui/node_modules/
+safetynet-ui/dist/
+safetynet-ui/.vite/
+
+# Temporary files accidentally created from shell commands
+safetynet-ui/az
+safetynet-ui/set
+
+# Separate placeholder repo
+Safetynet/

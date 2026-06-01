@@ -1,0 +1,61 @@
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Outfit:wght@300;400;500;600;700&display=swap');
+
+@import "tailwindcss";
+
+@theme {
+  --font-sans: 'Outfit', system-ui, -apple-system, sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+  
+  /* Premium Monochrome "Venture Light" White, Black & Grey Tokens */
+  --color-brand-navy: #FAFAFA;          /* Soft off-white elevated cards/drawers */
+  --color-brand-navy-dark: #FFFFFF;     /* Pure white canvas background */
+  --color-brand-navy-light: #E5E7EB;    /* Light gray borders, dividers, grid lines */
+  --color-brand-teal: #000000;          /* Deep pitch black for primary buttons & active tags */
+  --color-brand-amber: #4B5563;         /* Medium-dark gray for status levels */
+  --color-brand-red: #DC2626;           /* Crisp red alert (keeping desaturated clean red for security safety alerts) */
+  --color-brand-blue: #1F2937;          /* Dark charcoal gray for secondary tags */
+  --color-brand-slate: #000000;         /* Pure crisp black for main titles & body text */
+  --color-brand-slate-dark: #737373;    /* Cool gray for secondary labels & legends */
+
+  /* Threat Heatmap Spectrum */
+  --color-threat-critical: #DC2626;
+  --color-threat-high: #4B5563;
+  --color-threat-caution: #9CA3AF;
+  --color-threat-safe: #000000;
+  --color-threat-info: #6B7280;
+
+  /* Clean Shadows and Glassmorphisms */
+  --shadow-glass: 0 4px 12px 0 rgba(0, 0, 0, 0.05);
+  --shadow-glow-red: 0 0 10px rgba(220, 38, 38, 0.15);
+  --shadow-glow-amber: 0 0 10px rgba(75, 85, 99, 0.15);
+  --shadow-glow-teal: 0 0 10px rgba(0, 0, 0, 0.1);
+  
+  --border-glass: 1px solid #E5E7EB;
+}
+
+html, body, #root {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  background-color: var(--color-brand-navy-dark);
+  color: var(--color-brand-slate);
+  font-family: var(--font-sans);
+  overflow-x: hidden;
+}
+
+/* Custom Scrollbar for Premium Feel */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: var(--color-brand-navy-dark);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--color-brand-navy-light);
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-brand-teal);
+}
