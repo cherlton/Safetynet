@@ -1,0 +1,116 @@
+name: SafetyNet CI/CD - Build & Deploy to Azure
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch: # Allows manual trigger from the GitHub Actions tab
+
+permissions:
+  id-token: write
+  contents: read
+
+env:
+  RESOURCE_GROUP: rg-safetynet
+  API_APP_NAME: safetynet-api
+  UI_APP_NAME: safetynet-ui
+
+jobs:
+  deploy-api:
+    name: Build & Deploy Backend API
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
+
+      - name: Log in to Azure
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Log in to Azure Container Registry
+        run: |
+          az acr login --name ${{ vars.AZURE_ACR_NAME }}
+
+      # Step 1: Set up Java JDK and Build JAR
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: maven
+
+      - name: Build with Maven
+        run: |
+          cd safetynet-api
+          chmod +x mvnw
+          ./mvnw clean package -DskipTests
+
+      # Step 2: Build Docker Image and Push to ACR
+      - name: Build and Push Docker Image
+        run: |
+          docker build -t ${{ vars.AZURE_ACR_NAME }}.azurecr.io/${{ env.API_APP_NAME }}:${{ github.sha }} -f safetynet-api/Dockerfile safetynet-api
+          docker push ${{ vars.AZURE_ACR_NAME }}.azurecr.io/${{ env.API_APP_NAME }}:${{ github.sha }}
+
+      # Step 3: Deploy to Azure Container App
+      - name: Deploy to Azure Container App
+        uses: azure/container-apps-deploy-action@v2
+        with:
+          acrName: ${{ vars.AZURE_ACR_NAME }}
+          containerAppName: ${{ env.API_APP_NAME }}
+          resourceGroup: ${{ env.RESOURCE_GROUP }}
+          imageToDeploy: ${{ vars.AZURE_ACR_NAME }}.azurecr.io/${{ env.API_APP_NAME }}:${{ github.sha }}
+
+  deploy-ui:
+    name: Build & Deploy Frontend UI
+    runs-on: ubuntu-latest
+    needs: deploy-api # Run after API to ensure backend URL is ready and resolved
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
+
+      - name: Log in to Azure
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Log in to Azure Container Registry
+        run: |
+          az acr login --name ${{ vars.AZURE_ACR_NAME }}
+
+      # Step 1: Get API Public Ingress FQDN dynamically
+      - name: Get API Container App URL
+        id: get-api-url
+        run: |
+          API_URL=$(az containerapp show -n ${{ env.API_APP_NAME }} -g ${{ env.RESOURCE_GROUP }} --query "properties.configuration.ingress.fqdn" -o tsv)
+          echo "api_url=https://$API_URL" >> $GITHUB_OUTPUT
+
+      # Step 2: Build React UI with build-time environment variable
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: safetynet-ui/package-lock.json
+
+      - name: Install and Build UI
+        run: |
+          cd safetynet-ui
+          npm ci
+          export VITE_API_BASE_URL=${{ steps.get-api-url.outputs.api_url }}
+          npm run build
+
+      # Step 3: Build Docker Image (passing API URL as build-arg) and Push to ACR
+      - name: Build and Push Docker Image
+        run: |
+          docker build --build-arg VITE_API_BASE_URL=${{ steps.get-api-url.outputs.api_url }} -t ${{ vars.AZURE_ACR_NAME }}.azurecr.io/${{ env.UI_APP_NAME }}:${{ github.sha }} -f safetynet-ui/Dockerfile safetynet-ui
+          docker push ${{ vars.AZURE_ACR_NAME }}.azurecr.io/${{ env.UI_APP_NAME }}:${{ github.sha }}
+
+      # Step 4: Deploy to Azure Container App
+      - name: Deploy to Azure Container App
+        uses: azure/container-apps-deploy-action@v2
+        with:
+          acrName: ${{ vars.AZURE_ACR_NAME }}
+          containerAppName: ${{ env.UI_APP_NAME }}
+          resourceGroup: ${{ env.RESOURCE_GROUP }}
+          imageToDeploy: ${{ vars.AZURE_ACR_NAME }}.azurecr.io/${{ env.UI_APP_NAME }}:${{ github.sha }}
