@@ -1,88 +1,54 @@
-<div align="center">
+# 🛡️ SafetyNet
 
-<img src="https://capsule-render.vercel.app/api?type=waving&color=E74C3C,8E44AD&height=200&section=header&text=🛡️%20SafetyNet&fontSize=55&fontColor=ffffff&fontAlignY=38&desc=Community%20Safety%20%26%20Security%20Platform&descAlignY=58&descSize=20" width="100%"/>
+### Community Safety & Security Platform
 
-<br/>
-
-[![Typing SVG](https://readme-typing-svg.demolab.com?font=Fira+Code&size=20&pause=1000&color=E74C3C&center=true&vCenter=true&width=700&lines=Protecting+communities+through+technology;Role-Based+Auth+%7C+CPF+%7C+Security+Personnel;Google+OAuth+%2B+WhatsApp+Verification)](https://git.io/typing-svg)
-
-<br/>
-
-![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?style=for-the-badge&logo=typescript&logoColor=white)
-![Status](https://img.shields.io/badge/Status-Active_Development-E74C3C?style=for-the-badge)
-
-</div>
+Protecting communities through technology — connecting **Community Policing Forums (CPF)** with **Security Personnel** for real-time safety reporting, incident management, and coordinated response.
 
 ---
 
 ## 🎯 What is SafetyNet?
 
-> **SafetyNet** is a community-driven safety platform connecting **Community Policing Forums (CPF)** with **Security Personnel** for real-time safety reporting, incident management, and coordinated response.
+**SafetyNet** is a community-driven safety platform that connects neighborhood watch groups (CPF) with security personnel, enabling real-time incident reporting, response coordination, and safety analytics.
 
 ---
 
 ## 👥 User Roles
 
-<div align="center">
-
 | Role | Access Level | Description |
-|---|---|---|
-| 🏘️ **CPF** | Community | Report incidents, view alerts, community safety tracking |
-| 🔒 **SECURITY** | Operations | Incident management, response coordination, dashboards |
-
-</div>
+|------|---------------|--------------|
+| 🏘️ **CPF** | Community | Report incidents, view alerts, track community safety |
+| 🔒 **Security** | Operations | Manage incidents, coordinate response, view dashboards |
 
 ---
 
 ## ✨ Features
 
-| Feature | Details |
-|---|---|
-| 🔐 **JWT Authentication** | Secure login with token-based sessions |
-| 🌐 **Google OAuth** | One-click sign-in via Google |
-| 📱 **WhatsApp Verification** | Phone number verification via WhatsApp API |
-| 👤 **Role-Based Access** | CPF and Security role separation |
-| 🖼️ **Profile Management** | Avatar and profile picture support |
-| 🚨 **Incident Reporting** | Real-time safety event creation and tracking |
-| 📊 **Analytics Dashboard** | Safety event monitoring and trend analysis |
-
----
-
-## 🔐 Auth API Endpoints
+- 🔐 **JWT Authentication** — Secure login with token-based sessions
+- 🌐 **Google OAuth** — One-click sign-in via Google
+- 📱 **WhatsApp Verification** — Phone number verification via WhatsApp API
+- 👤 **Role-Based Access** — CPF and Security role separation
+- 🖼️ **Profile Management** — Avatar and profile picture support
+- 🚨 **Incident Reporting** — Real-time safety event creation and tracking
+- 📊 **Analytics Dashboard** — Safety event monitoring and trend analysis
 
 ---
 
 ## 🛠️ Built With
 
-<div align="center">
+**Frontend:** React · TypeScript · Tailwind CSS
 
-**Frontend**
+**Backend:** Java · Spring Boot · JWT · Google OAuth
 
-![React](https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)
-![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?style=for-the-badge&logo=typescript&logoColor=white)
-![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white)
-
-**Backend**
-
-![Java](https://img.shields.io/badge/Java-ED8B00?style=for-the-badge&logo=openjdk&logoColor=white)
-![Spring Boot](https://img.shields.io/badge/Spring_Boot-6DB33F?style=for-the-badge&logo=spring-boot&logoColor=white)
-![JWT](https://img.shields.io/badge/JWT-black?style=for-the-badge&logo=JSON%20web%20tokens)
-![Google OAuth](https://img.shields.io/badge/Google_OAuth-4285F4?style=for-the-badge&logo=google&logoColor=white)
-
-**Database**
-
-![PostgreSQL](https://img.shields.io/badge/PostgreSQL-316192?style=for-the-badge&logo=postgresql&logoColor=white)
-
-</div>
+**Database:** PostgreSQL
 
 ---
 
 ## 🚀 Run Locally
 
-```bash
+\`\`\`bash
 git clone https://github.com/cherlton/Safetynet.git
 cd Safetynet
 npm install
 cp .env.example .env    # Configure API keys & database
 npm run dev
-```
+\`\`\`
