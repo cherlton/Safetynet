@@ -50,7 +50,6 @@
 
 ## 🔐 Auth API Endpoints
 
-
 ---
 
 ## 🛠️ Built With
@@ -86,3 +85,4 @@ cd Safetynet
 npm install
 cp .env.example .env    # Configure API keys & database
 npm run dev
+```
