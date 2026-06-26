@@ -1,1 +1,52 @@
-"# Safetynet"  initgit add README.mdgit commit -m "first commit"git branch -M maingit remote add origin https://github.com/cherlton/Safetynet.gitgit push -u origin main
+<div align="center">
+
+<img src="https://capsule-render.vercel.app/api?type=waving&color=E74C3C,8E44AD&height=200&section=header&text=🛡️%20SafetyNet&fontSize=55&fontColor=ffffff&fontAlignY=38&desc=Community%20Safety%20%26%20Security%20Platform&descAlignY=58&descSize=20" width="100%"/>
+
+<br/>
+
+[![Typing SVG](https://readme-typing-svg.demolab.com?font=Fira+Code&size=20&pause=1000&color=E74C3C&center=true&vCenter=true&width=700&lines=Protecting+communities+through+technology;Role-Based+Auth+%7C+CPF+%7C+Security+Personnel;Google+OAuth+%2B+WhatsApp+Verification)](https://git.io/typing-svg)
+
+<br/>
+
+![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?style=for-the-badge&logo=typescript&logoColor=white)
+![Status](https://img.shields.io/badge/Status-Active_Development-E74C3C?style=for-the-badge)
+
+</div>
+
+---
+
+## 🎯 What is SafetyNet?
+
+> **SafetyNet** is a community-driven safety platform connecting **Community Policing Forums (CPF)** with **Security Personnel** for real-time safety reporting, incident management, and coordinated response.
+
+---
+
+## 👥 User Roles
+
+<div align="center">
+
+| Role | Access Level | Description |
+|---|---|---|
+| 🏘️ **CPF** | Community | Report incidents, view alerts, community safety tracking |
+| 🔒 **SECURITY** | Operations | Incident management, response coordination, dashboards |
+
+</div>
+
+---
+
+## ✨ Features
+
+| Feature | Details |
+|---|---|
+| 🔐 **JWT Authentication** | Secure login with token-based sessions |
+| 🌐 **Google OAuth** | One-click sign-in via Google |
+| 📱 **WhatsApp Verification** | Phone number verification via WhatsApp API |
+| 👤 **Role-Based Access** | CPF and Security role separation |
+| 🖼️ **Profile Management** | Avatar and profile picture support |
+| 🚨 **Incident Reporting** | Real-time safety event creation and tracking |
+| 📊 **Analytics Dashboard** | Safety event monitoring and trend analysis |
+
+---
+
+## 🔐 Auth API Endpoints
+
