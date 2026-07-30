@@ -1,1 +1,56 @@
-"# Safetynet"  initgit add README.mdgit commit -m "first commit"git branch -M maingit remote add origin https://github.com/cherlton/Safetynet.gitgit push -u origin main
+Viewed TwilioWebhookController.java:1-114
+Viewed GeminiAIService.java:1-320
+Viewed AuthController.java:1-187
+Viewed IncidentService.java:1-312
+
+Here is a breakdown of how **WhatsApp API**, **Gemini AI**, and **Google API** are integrated into **SafetyNet API**:
+
+---
+
+### 1. WhatsApp API Integration (Twilio Webhooks)
+- **Controller**: [TwilioWebhookController.java](file:///c:/Users/Tumi/Downloads/Crime/safetynet/safetynet-api/src/main/java/com/safetynet/safetynet_api/controller/TwilioWebhookController.java#L37-L45)
+- **Webhook Endpoint**: `POST /webhook/whatsapp`
+
+#### How it works:
+1. **Incoming Messages**: When a citizen sends a WhatsApp message to the SafetyNet Twilio number, Twilio forwards an HTTP POST request (`application/x-www-form-urlencoded`) containing the message body, sender number (`From`), and location/attachments to SafetyNet.
+2. **Signature Security**: The system extracts the `X-Twilio-Signature` header and uses Twilio’s `RequestValidator` to verify that the request authenticates from Twilio.
+3. **Stateful Conversation Flow**: [IncidentService.java](file:///c:/Users/Tumi/Downloads/Crime/safetynet/safetynet-api/src/main/java/com/safetynet/safetynet_api/service/IncidentService.java#L119-L236) manages a state machine per phone number:
+   - `AWAITING_ANONYMITY`: Asks if the user wants to stay anonymous (`yes`/`no`).
+   - `AWAITING_REPORT_DETAILS`: Collects incident text.
+   - `AWAITING_IMAGES`: Asks for media/photos.
+4. **TwiML Responses**: The backend responds with XML formatted as **TwiML** (`<Response><Message>...</Message></Response>`), which Twilio sends back to the user as WhatsApp chat replies.
+
+---
+
+### 2. Gemini AI Integration (Google Generative AI)
+- **Service**: [GeminiAIService.java](file:///c:/Users/Tumi/Downloads/Crime/safetynet/safetynet-api/src/main/java/com/safetynet/safetynet_api/service/GeminiAIService.java#L17)
+- **Model**: `gemini-1.5-flash` via REST client (`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent`)
+
+#### How it works:
+Gemini AI is invoked across **3 main stages** when a report is submitted:
+
+1. **PII Redaction (`redactPII`)**:
+   - Sends the raw WhatsApp message text to Gemini with a system prompt.
+   - Replaces names, phone numbers, ID numbers, and street addresses with `[REDACTED]` to preserve privacy before data is stored or broadcast.
+2. **Structured Pattern Extraction (`extractPattern`)**:
+   - Instructs Gemini (using `responseMimeType: application/json`) to return structured JSON.
+   - Extracts attributes: `crime_type`, `infrastructure_target`, `severity` (1–5 scale), `keywords`, and `estimated_time`.
+3. **Urgency Scoring (`scoreUrgency`)**:
+   - Evaluates the redacted report text against natural language emergency cues (e.g., *"shots fired"*, *"cable theft in progress"*, *"armed robbery"*).
+   - Generates an integer urgency rating from **1** (low priority) to **10** (critical emergency).
+
+Once processed by Gemini, the incident is saved to PostGIS/PostgreSQL and broadcast live over WebSockets to the CPF dashboard (`/topic/incidents`).
+
+---
+
+### 3. Google API Integration (Google OAuth / Authentication)
+- **Controller**: [AuthController.java](file:///c:/Users/Tumi/Downloads/Crime/safetynet/safetynet-api/src/main/java/com/safetynet/safetynet_api/controller/AuthController.java#L121-L160)
+- **Endpoint**: `POST /api/auth/google-login`
+
+#### How it works:
+1. **SSO Authentication**: The frontend allows users/CPF officers to log in using Google Single Sign-On (SSO).
+2. **Google Identity Verification**: The client sends a [GoogleLoginRequestDTO](file:///c:/Users/Tumi/Downloads/Crime/safetynet/safetynet-api/src/main/java/com/safetynet/safetynet_api/dto/GoogleLoginRequestDTO.java) containing `googleSub` (Google's unique user identifier), `email`, `name`, and `picture`.
+3. **Database Matching & Account Linking**:
+   - Checks the database for an existing user matching `googleSub` or `email`.
+   - If an existing user matches, it attaches their `googleSub` and issues an authenticated session token.
+   - If it is a new user, it responds with `registered: false` and prompts the user to complete WhatsApp phone verification to link their account.
