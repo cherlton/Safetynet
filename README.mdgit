@@ -1,23 +1,56 @@
-# SafetyNet API — Integration & Architecture Guide
+# SafetyNet API
 
-SafetyNet API is a Spring Boot backend application designed for real-time community crime reporting, AI-powered incident classification, and identity management. It integrates **WhatsApp API (via Twilio)** for citizen reporting, **Google Gemini AI** for intelligent text analysis and PII redaction, and **Google OAuth API** for identity management.
+Real-time community crime reporting, AI-powered incident classification, and identity management — built on Spring Boot.
+
+SafetyNet API integrates:
+- **WhatsApp (via Twilio)** for citizen incident reporting
+- **Google Gemini AI** for intelligent text analysis and PII redaction
+- **Google OAuth** for identity management
 
 ---
 
-## 🏗️ System Architecture Overview
+## Table of Contents
+
+- [How SafetyNet Works (In Simple Terms)](#how-safetynet-works-in-simple-terms)
+- [Architecture Overview](#architecture-overview)
+- [Key Integrations](#key-integrations)
+  - [1. WhatsApp Integration (Twilio Webhooks)](#1-whatsapp-integration-twilio-webhooks)
+  - [2. Gemini AI Integration](#2-gemini-ai-integration-google-generative-ai)
+  - [3. Google OAuth & Identity Integration](#3-google-oauth--identity-integration)
+- [Environment Configuration](#environment-configuration)
+- [Running the API](#running-the-api)
+
+---
+
+## How SafetyNet Works (In Simple Terms)
+
+1. **Citizen reports via WhatsApp**
+   - A community member texts "report" to SafetyNet on WhatsApp.
+   - The bot asks simple step-by-step questions: *"Do you want to stay anonymous?"* and *"What happened?"*
+2. **AI cleans & classifies the report**
+   - **Privacy filter (Gemini AI)** — hides names, phone numbers, and addresses (`[REDACTED]`) to protect the citizen's safety.
+   - **Crime analysis** — Gemini AI identifies the type of crime (e.g. cable theft, robbery) and rates urgency from 1 to 10.
+3. **Live alerts on the frontend UI**
+   - **Google Sign-In** — Community Policing Forum (CPF) officers log in using Google SSO.
+   - **Interactive map** — shows pins of where incidents are happening in real time.
+   - **Live alert feed** — instant WebSocket updates pop up on the dashboard screen without needing to refresh the page.
+
+---
+
+## Architecture Overview
 
 ```mermaid
 flowchart TD
     Citizen([Citizen on WhatsApp]) -->|1. Incoming Message| Twilio[Twilio WhatsApp Gateway]
     Twilio -->|2. HTTP POST /webhook/whatsapp| API[TwilioWebhookController]
-    
+
     API -->|3. State Machine & Session| Service[IncidentService]
     Service -->|4. Redact PII & Extract Patterns| Gemini[Gemini AI API]
-    
+
     Service -->|5. Store Anonymized Report| DB[(PostgreSQL + PostGIS)]
     Service -->|6. Real-time STOMP Broadcast| WS[WebSocket Broker /topic/incidents]
     WS -->|7. Live Alert| Dashboard[CPF Dashboard UI]
-    
+
     Service -->|8. TwiML Response| Twilio
     Twilio -->|9. Reply Message| Citizen
 
@@ -27,56 +60,64 @@ flowchart TD
 
 ---
 
-## 🔌 Key API Integrations
+## Key Integrations
 
 ### 1. WhatsApp Integration (Twilio Webhooks)
 
-- **Source Code**: [`TwilioWebhookController.java`](file:///c:/Users/Tumi/Downloads/Crime/safetynet/safetynet-api/src/main/java/com/safetynet/safetynet_api/controller/TwilioWebhookController.java) | [`IncidentService.java`](file:///c:/Users/Tumi/Downloads/Crime/safetynet/safetynet-api/src/main/java/com/safetynet/safetynet_api/service/IncidentService.java)
-- **Endpoint**: `POST /webhook/whatsapp`
-- **Content Type**: `application/x-www-form-urlencoded`
+| | |
+|---|---|
+| **Source** | [`TwilioWebhookController.java`](file:///c:/Users/Tumi/Downloads/Crime/safetynet/safetynet-api/src/main/java/com/safetynet/safetynet_api/controller/TwilioWebhookController.java), [`IncidentService.java`](file:///c:/Users/Tumi/Downloads/Crime/safetynet/safetynet-api/src/main/java/com/safetynet/safetynet_api/service/IncidentService.java) |
+| **Endpoint** | `POST /webhook/whatsapp` |
+| **Content Type** | `application/x-www-form-urlencoded` |
 
-#### Features & Workflow:
-1. **Signature Security**: Validates the `X-Twilio-Signature` HTTP header using Twilio's `RequestValidator` and the configured `TWILIO_AUTH_TOKEN` to ensure requests originate exclusively from Twilio.
-2. **Stateful Conversation Engine**: Maintains an in-memory session state machine per phone number:
-   - `AWAITING_ANONYMITY`: Asks the user if they wish to remain anonymous (`yes` / `no`).
-   - `AWAITING_REPORT_DETAILS`: Captures raw incident description.
-   - `AWAITING_IMAGES`: Prompts for incident media uploads.
-3. **Automated TwiML Formatting**: Generates TwiML XML payloads (`<Response><Message>...</Message></Response>`) returned to Twilio to reply dynamically to the WhatsApp user.
+**Features & Workflow**
+
+1. **Signature security** — Validates the `X-Twilio-Signature` HTTP header using Twilio's `RequestValidator` and the configured `TWILIO_AUTH_TOKEN`, ensuring requests originate exclusively from Twilio.
+2. **Stateful conversation engine** — Maintains an in-memory session state machine per phone number:
+   - `AWAITING_ANONYMITY` — asks the user if they wish to remain anonymous (`yes` / `no`)
+   - `AWAITING_REPORT_DETAILS` — captures the raw incident description
+   - `AWAITING_IMAGES` — prompts for incident media uploads
+3. **Automated TwiML formatting** — Generates TwiML XML payloads (`<Response><Message>...</Message></Response>`) returned to Twilio to reply dynamically to the WhatsApp user.
 
 ---
 
 ### 2. Gemini AI Integration (Google Generative AI)
 
-- **Source Code**: [`GeminiAIService.java`](file:///c:/Users/Tumi/Downloads/Crime/safetynet/safetynet-api/src/main/java/com/safetynet/safetynet_api/service/GeminiAIService.java)
-- **Model Endpoint**: `gemini-1.5-flash` (`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent`)
+| | |
+|---|---|
+| **Source** | [`GeminiAIService.java`](file:///c:/Users/Tumi/Downloads/Crime/safetynet/safetynet-api/src/main/java/com/safetynet/safetynet_api/service/GeminiAIService.java) |
+| **Model Endpoint** | `gemini-1.5-flash` (`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent`) |
 
-#### AI Processing Pipeline:
+**AI Processing Pipeline**
 
 | Task | Method | Description |
-| :--- | :--- | :--- |
-| **PII Redaction** | `redactPII()` | Removes names, phone numbers, SA ID numbers, and street addresses, replacing them with `[REDACTED]`. |
-| **Pattern Extraction** | `extractPattern()` | Uses `responseMimeType: application/json` to extract `crime_type`, `infrastructure_target`, `severity` (1–5 scale), `keywords`, and `estimated_time`. |
-| **Urgency Scoring** | `scoreUrgency()` | Analyzes natural language cues (e.g., *"armed"*, *"shots fired"*, *"ongoing"*) to rate urgency on a 1–10 scale. |
-| **Report Parsing** | `extractReportDetails()` | Parses reporter details while respecting user anonymity preferences. |
+|---|---|---|
+| PII Redaction | `redactPII()` | Removes names, phone numbers, SA ID numbers, and street addresses, replacing them with `[REDACTED]`. |
+| Pattern Extraction | `extractPattern()` | Uses `responseMimeType: application/json` to extract `crime_type`, `infrastructure_target`, `severity` (1–5 scale), `keywords`, and `estimated_time`. |
+| Urgency Scoring | `scoreUrgency()` | Analyzes natural language cues (e.g. "armed", "shots fired", "ongoing") to rate urgency on a 1–10 scale. |
+| Report Parsing | `extractReportDetails()` | Parses reporter details while respecting user anonymity preferences. |
 
 ---
 
 ### 3. Google OAuth & Identity Integration
 
-- **Source Code**: [`AuthController.java`](file:///c:/Users/Tumi/Downloads/Crime/safetynet/safetynet-api/src/main/java/com/safetynet/safetynet_api/controller/AuthController.java)
-- **Endpoint**: `POST /api/auth/google-login`
+| | |
+|---|---|
+| **Source** | [`AuthController.java`](file:///c:/Users/Tumi/Downloads/Crime/safetynet/safetynet-api/src/main/java/com/safetynet/safetynet_api/controller/AuthController.java) |
+| **Endpoint** | `POST /api/auth/google-login` |
 
-#### Authentication Flow:
-1. **SSO Payload**: Receives [`GoogleLoginRequestDTO`](file:///c:/Users/Tumi/Downloads/Crime/safetynet/safetynet-api/src/main/java/com/safetynet/safetynet_api/dto/GoogleLoginRequestDTO.java) containing `googleSub`, `email`, `name`, and `picture`.
-2. **Account Linking**: Searches PostgreSQL for matching `googleSub` or `email`.
-   - **Existing User**: Authenticates user and links `googleSub` if missing.
-   - **New User**: Returns `registered: false`, triggering mandatory WhatsApp number verification before finalizing registration.
+**Authentication Flow**
+
+1. **SSO payload** — Receives a [`GoogleLoginRequestDTO`](file:///c:/Users/Tumi/Downloads/Crime/safetynet/safetynet-api/src/main/java/com/safetynet/safetynet_api/dto/GoogleLoginRequestDTO.java) containing `googleSub`, `email`, `name`, and `picture`.
+2. **Account linking** — Searches PostgreSQL for a matching `googleSub` or `email`.
+   - **Existing user** — authenticates the user and links `googleSub` if missing.
+   - **New user** — returns `registered: false`, triggering mandatory WhatsApp number verification before finalizing registration.
 
 ---
 
-## ⚙️ Environment Configuration
+## Environment Configuration
 
-Set the following environment variables in `.env` or system environment:
+Set the following environment variables in `.env` or your system environment:
 
 ```env
 # Twilio WhatsApp Configuration
@@ -95,7 +136,7 @@ SPRING_DATASOURCE_PASSWORD=your_password
 
 ---
 
-## 🚀 Running the API
+## Running the API
 
 ```bash
 # Build the application
