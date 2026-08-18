@@ -14,30 +14,35 @@ export const useNearbyIncidents = () => {
     if (!user) return
 
     const loadData = async () => {
-      setLoading(true)
-      setError(null)
       try {
         let data
         if (latitude && longitude) {
-          // Dynamic metric filter using PostGIS radius coordinates
-          data = await incidentService.getNearbyIncidents(latitude, longitude, 20000) // 20km radius
+          data = await incidentService.getNearbyIncidents(latitude, longitude, 20000)
         } else {
-          // Global list fallback
           data = await incidentService.getAllIncidents()
         }
         
-        if (data && data.length > 0) {
+        if (data) {
           setIncidents(data)
         }
       } catch (err: any) {
-        console.warn('Backend API unreachable or offline. Operating in local sandbox simulation mode.', err)
+        console.warn('Polling synchronization notice:', err.message)
         setError(err.message || 'API connection failure.')
       } finally {
         setLoading(false)
       }
     }
 
+    // Initial load
+    setLoading(true)
     loadData()
+
+    // Auto-polling interval every 4 seconds for instant real-time live synchronization
+    const pollInterval = setInterval(() => {
+      loadData()
+    }, 4000)
+
+    return () => clearInterval(pollInterval)
   }, [user, latitude, longitude, setIncidents])
 
   return { loading, error }

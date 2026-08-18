@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { useStore } from '../store/useStore'
-import { Bell, ShieldAlert, Key, UserCheck, AlertTriangle, Info } from 'lucide-react'
+import { Bell, ShieldAlert, Key, UserCheck, AlertTriangle, Info, MapPin } from 'lucide-react'
 
 interface SystemNotification {
   id: string
@@ -12,7 +12,7 @@ interface SystemNotification {
 }
 
 export const NotificationPanel: React.FC = () => {
-  const { incidents } = useStore()
+  const { incidents, user } = useStore()
   const [permission, setPermission] = useState<NotificationPermission>('default')
 
   // Track real browser notifications permission on mount
@@ -41,51 +41,38 @@ export const NotificationPanel: React.FC = () => {
   const getSystemNotifications = (): SystemNotification[] => {
     const list: SystemNotification[] = []
 
-    // 1. Seed dynamic logs from real simulated/seeded threats
+    // 1. Dynamic logs from real API/WebSocket threats
     incidents.forEach((inc, index) => {
+      const reporterTag = inc.isAnonymous ? "🔒 Anonymous Citizen" : (inc.reporterName ? `👤 ${inc.reporterName}` : "📱 WhatsApp Signal");
+      const locationTag = inc.reporterLocation ? ` • 📍 ${inc.reporterLocation}` : "";
+      
       list.push({
         id: `threat-${inc.id}-${index}`,
-        title: `🚨 Threat Ingested: ${inc.crimeType}`,
-        description: `Signal anonymised & mapped. Severity: ${inc.severity}/5. Reported: "${inc.cleanText.substring(0, 70)}..."`,
+        title: `🚨 Incident #${inc.id}: ${inc.crimeType.replace(/_/g, ' ')}`,
+        description: `${reporterTag}${locationTag} • Severity: ${inc.severity}/5 • Priority: ${inc.urgency}/10\n"${inc.cleanText.substring(0, 100)}${inc.cleanText.length > 100 ? '...' : ''}"`,
         time: new Date(inc.reportedAt).toLocaleTimeString(),
         category: 'threat',
         read: false
       })
     })
 
-    // 2. Synthesize key dispatch & CPF operations logs
-    list.push({
-      id: 'sys-1',
-      title: '👤 CPF Dispatcher Login',
-      description: 'Active session initialized for officer_nkosi (CPF Sector Representative).',
-      time: 'Just now',
-      category: 'security',
-      read: true
-    })
+    // 2. Real dispatcher session log
+    if (user) {
+      list.push({
+        id: 'auth-active-user',
+        title: `👤 Active Session: ${user.username}`,
+        description: `Authenticated as ${user.role} responder with real-time incident grid access.`,
+        time: 'Active Session',
+        category: 'security',
+        read: true
+      })
+    }
 
     list.push({
-      id: 'sys-2',
-      title: '🔒 POPIA Redaction Engine Active',
-      description: 'System automatically scrubbed 3 witness contact numbers and 2 names from incoming SMS stream.',
-      time: '15 mins ago',
-      category: 'security',
-      read: true
-    })
-
-    list.push({
-      id: 'sys-3',
-      title: '⚙️ Leaflet Spatial Layer Configured',
-      description: 'South African administrative boundaries and municipal sectors successfully cached locally.',
-      time: '1 hour ago',
-      category: 'system',
-      read: true
-    })
-
-    list.push({
-      id: 'sys-4',
-      title: '🔑 Webhook Dispatcher Hooked',
-      description: 'Spring Boot REST webhook validated and secured via signature verification.',
-      time: '3 hours ago',
+      id: 'popia-engine',
+      title: '🔒 POPIA AI Redaction Active',
+      description: 'Citizen WhatsApp ingest pipeline running with automatic PII scrubbing.',
+      time: 'Live',
       category: 'system',
       read: true
     })
@@ -142,7 +129,7 @@ export const NotificationPanel: React.FC = () => {
           </div>
           <div className="text-left">
             <span className="block text-[9px] text-brand-slate-dark font-mono uppercase">Privacy Engine</span>
-            <span className="text-xs font-bold text-brand-teal font-mono uppercase">POPIA Secure</span>
+            <span className="text-xs font-bold text-brand-teal font-mono uppercase">POPIA Compliant</span>
           </div>
         </div>
 
@@ -152,8 +139,8 @@ export const NotificationPanel: React.FC = () => {
             <AlertTriangle className="w-4 h-4" />
           </div>
           <div className="text-left">
-            <span className="block text-[9px] text-brand-slate-dark font-mono uppercase">Dispatch Logs</span>
-            <span className="text-xs font-bold text-brand-slate font-mono">{notifications.length} Registered</span>
+            <span className="block text-[9px] text-brand-slate-dark font-mono uppercase">Active Events</span>
+            <span className="text-xs font-bold text-brand-slate font-mono">{incidents.length} Live Incidents</span>
           </div>
         </div>
       </div>
@@ -198,7 +185,7 @@ export const NotificationPanel: React.FC = () => {
                     <span className="text-xs font-bold text-brand-slate">{notif.title}</span>
                     <span className="text-[9px] text-brand-slate-dark font-mono whitespace-nowrap">{notif.time}</span>
                   </div>
-                  <p className="text-xs text-brand-slate-dark leading-relaxed">
+                  <p className="text-xs text-brand-slate-dark leading-relaxed whitespace-pre-line">
                     {notif.description}
                   </p>
                 </div>

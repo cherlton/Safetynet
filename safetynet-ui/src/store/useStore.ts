@@ -12,7 +12,7 @@ interface AppState {
   sidebarOpen: boolean;
   
   // Actions
-  login: (username: string, role: 'CPF' | 'SECURITY', token: string) => void;
+  login: (user: User, token: string) => void;
   logout: () => void;
   setCoords: (lat: number, lng: number) => void;
   setConsentGranted: (granted: boolean) => void;
@@ -26,7 +26,7 @@ export const useStore = create<AppState>((set) => {
   const storedUser = localStorage.getItem('safetynet_user');
   const storedToken = localStorage.getItem('safetynet_auth_token');
   
-  let initialUser = null;
+  let initialUser: User | null = null;
   if (storedUser) {
     try {
       initialUser = JSON.parse(storedUser);
@@ -45,10 +45,10 @@ export const useStore = create<AppState>((set) => {
     activeTab: (localStorage.getItem('safetynet_last_active_tab') as 'dashboard' | 'map' | 'reports' | 'notifications' | 'settings') || 'dashboard',
     sidebarOpen: true,
 
-    login: (username, role, token) => {
+    login: (user, token) => {
       localStorage.setItem('safetynet_auth_token', token);
-      localStorage.setItem('safetynet_user', JSON.stringify({ username, role }));
-      set({ user: { username, role }, token });
+      localStorage.setItem('safetynet_user', JSON.stringify(user));
+      set({ user, token });
     },
     logout: () => {
       localStorage.removeItem('safetynet_auth_token');
@@ -60,7 +60,14 @@ export const useStore = create<AppState>((set) => {
       localStorage.setItem('safetynet_location_consent', String(granted));
       set({ locationConsentGranted: granted });
     },
-    addIncident: (incident) => set((state) => ({ incidents: [incident, ...state.incidents] })),
+    addIncident: (incident) => set((state) => {
+      // Prevent duplicates
+      const exists = state.incidents.some(i => i.id === incident.id);
+      if (exists) {
+        return { incidents: state.incidents.map(i => i.id === incident.id ? incident : i) };
+      }
+      return { incidents: [incident, ...state.incidents] };
+    }),
     setIncidents: (incidents) => set({ incidents }),
     setActiveTab: (tab) => {
       localStorage.setItem('safetynet_last_active_tab', tab);

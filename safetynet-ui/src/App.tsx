@@ -41,9 +41,9 @@ export const App: React.FC = () => {
   }, [user, slides.length])
 
   // Login states
-  const [usernameInput, setUsernameInput] = useState('officer_nkosi')
+  const [usernameInput, setUsernameInput] = useState('')
   const [roleInput, setRoleInput] = useState<'CPF' | 'SECURITY'>('CPF')
-  const [passwordInput, setPasswordInput] = useState('••••••••')
+  const [passwordInput, setPasswordInput] = useState('')
   const [loading, setLoading] = useState(false)
 
   // Floating real-time alert state
@@ -90,7 +90,12 @@ export const App: React.FC = () => {
     setLoading(true)
     try {
       const result = await authService.login(usernameInput, passwordInput);
-      login(result.username, result.role, result.token || "jwt_token_stub");
+      login({
+        username: result.username,
+        role: result.role,
+        email: result.email,
+        picture: result.picture
+      }, result.token || "");
     } catch (err: any) {
       console.error(err);
       alert(err.message || "Invalid credentials");
@@ -132,7 +137,12 @@ export const App: React.FC = () => {
 
       if (authResult.registered) {
         // User exists! Login directly.
-        login(authResult.username, authResult.role, authResult.token || jwtToken);
+        login({
+          username: authResult.username,
+          role: authResult.role,
+          email: authResult.email,
+          picture: authResult.picture
+        }, authResult.token || jwtToken);
       } else {
         // User does not exist, go to WhatsApp verification to register
         setGoogleAuthProfile({
@@ -205,7 +215,13 @@ export const App: React.FC = () => {
           picture: googleAuthProfile.picture,
           googleSub: googleAuthProfile.googleSub
         });
-        login(result.username, result.role, result.token || googleAuthProfile.token);
+        login({
+          username: result.username,
+          role: result.role,
+          email: result.email,
+          phoneNumber: result.phoneNumber,
+          picture: result.picture
+        }, result.token || googleAuthProfile.token);
       } else {
         // Standard Registration
         const result = await authService.register({
@@ -214,7 +230,13 @@ export const App: React.FC = () => {
           phoneNumber: phoneInput,
           role: roleInput
         });
-        login(result.username, result.role, result.token || "jwt_token_stub");
+        login({
+          username: result.username,
+          role: result.role,
+          email: result.email,
+          phoneNumber: result.phoneNumber,
+          picture: result.picture
+        }, result.token || "");
       }
       setGoogleAuthProfile(null);
       setAuthView('login');
@@ -337,17 +359,18 @@ export const App: React.FC = () => {
     }, {} as Record<string, { name: string; Gauteng: number; WesternCape: number; KwaZuluNatal: number }>)
   ).map(([_, data]) => data)
 
-  // Recharts Hourly Area chart data
-  const chartDataHourly = [
-    { hour: '06:00', count: 1 },
-    { hour: '09:00', count: 3 },
-    { hour: '12:00', count: 5 },
-    { hour: '15:00', count: 4 },
-    { hour: '18:00', count: 7 },
-    { hour: '21:00', count: 9 },
-    { hour: '00:00', count: 8 },
-    { hour: '03:00', count: 4 },
-  ]
+  // Recharts Hourly Area chart data calculated from real incident records
+  const hourlySlots = ['00:00', '03:00', '06:00', '09:00', '12:00', '15:00', '18:00', '21:00']
+  const chartDataHourly = hourlySlots.map(slot => {
+    const slotHour = parseInt(slot.split(':')[0], 10)
+    const count = incidents.filter(inc => {
+      const date = new Date(inc.reportedAt)
+      if (isNaN(date.getTime())) return false
+      const h = date.getHours()
+      return h >= slotHour && h < slotHour + 3
+    }).length
+    return { hour: slot, count }
+  })
 
   // Render Login Page if not signed in
   if (!user) {
@@ -799,9 +822,13 @@ export const App: React.FC = () => {
             {/* Logged in dispatcher credentials chip */}
             {user && (
               <div className="flex items-center gap-2.5 px-3 py-1 rounded-md bg-brand-navy-dark/10 border border-brand-navy-light">
-                <div className="w-6 h-6 rounded bg-brand-navy-dark/25 border border-brand-navy-light flex items-center justify-center text-[10px] font-bold text-brand-slate uppercase font-mono select-none">
-                  {user.username.substring(0, 2).toUpperCase()}
-                </div>
+                {user.picture ? (
+                  <img src={user.picture} alt={user.username} className="w-6 h-6 rounded-full object-cover border border-brand-navy-light" />
+                ) : (
+                  <div className="w-6 h-6 rounded bg-brand-navy-dark/25 border border-brand-navy-light flex items-center justify-center text-[10px] font-bold text-brand-slate uppercase font-mono select-none">
+                    {user.username.substring(0, 2).toUpperCase()}
+                  </div>
+                )}
                 <div className="flex flex-col text-left">
                   <span className="text-[11px] font-bold text-brand-slate leading-none">{user.username}</span>
                   <span className="text-[8px] font-mono font-bold text-brand-slate-dark uppercase tracking-wider leading-none mt-1">
