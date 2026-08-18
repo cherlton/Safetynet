@@ -1,13 +1,12 @@
 import React, { useState } from 'react'
 import { useStore } from '../store/useStore'
-import { FolderOpen, X, MapPin, User, ShieldCheck, Phone, Check, Image, ZoomIn, Sparkles, ShieldAlert, Radio, Eye } from 'lucide-react'
+import { FolderOpen, X, MapPin, ShieldCheck, Phone, Image, ZoomIn, Sparkles, ShieldAlert, Radio, Eye } from 'lucide-react'
 
 export const IncidentFeed: React.FC = () => {
   const { incidents, setCoords, setActiveTab, user } = useStore()
   const [searchTerm, setSearchTerm] = useState('')
   const [severityFilter, setSeverityFilter] = useState<number | 'ALL'>('ALL')
   const [selectedIncident, setSelectedIncident] = useState<typeof incidents[0] | null>(null)
-  const [copied, setCopied] = useState(false)
   const [mediaLightbox, setMediaLightbox] = useState(false)
 
   const filteredIncidents = incidents.filter((inc) => {

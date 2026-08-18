@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { useStore } from '../store/useStore'
-import { Bell, ShieldAlert, Key, UserCheck, AlertTriangle, Info, MapPin } from 'lucide-react'
+import { Bell, ShieldAlert, Key, UserCheck, AlertTriangle, Info } from 'lucide-react'
 
 interface SystemNotification {
   id: string

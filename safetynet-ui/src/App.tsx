@@ -219,7 +219,7 @@ export const App: React.FC = () => {
           username: result.username,
           role: result.role,
           email: result.email,
-          phoneNumber: result.phoneNumber,
+          phoneNumber: result.phoneNumber || phoneInput,
           picture: result.picture
         }, result.token || googleAuthProfile.token);
       } else {
@@ -234,7 +234,7 @@ export const App: React.FC = () => {
           username: result.username,
           role: result.role,
           email: result.email,
-          phoneNumber: result.phoneNumber,
+          phoneNumber: result.phoneNumber || phoneInput,
           picture: result.picture
         }, result.token || "");
       }

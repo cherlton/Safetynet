@@ -4,6 +4,7 @@ export interface AuthResponse {
   registered: boolean;
   username: string;
   email: string | null;
+  phoneNumber?: string | null;
   role: 'CPF' | 'SECURITY';
   picture: string | null;
   token: string | null;
