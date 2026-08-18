@@ -26,5 +26,5 @@ safetynet-ui/.vite/
 safetynet-ui/az
 safetynet-ui/set
 
-# Separate placeholder repo
-Safetynet/
+# Root placeholder repo (anchored with leading slash so it doesn't ignore com/safetynet)
+/Safetynet/
