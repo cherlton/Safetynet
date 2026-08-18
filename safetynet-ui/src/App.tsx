@@ -10,7 +10,7 @@ import { useWebSocket } from './hooks/useWebSocket'
 import { useNearbyIncidents } from './hooks/useNearbyIncidents'
 import { incidentService } from './api/incidentService'
 import { authService } from './api/authService'
-import { Activity, AlertTriangle, Loader2, Key, Lock, Settings, Menu, Bell } from 'lucide-react'
+import { Activity, AlertTriangle, Loader2, Key, Lock, Settings, Menu, Bell, Copy, Check, MessageSquare, Smartphone } from 'lucide-react'
 import safetynetLogo from './assets/safetynet_logo.png'
 import heroSlide1 from './assets/images/hero_slide_1.png'
 import heroSlide2 from './assets/images/hero_slide_2.png'
@@ -19,7 +19,7 @@ export const App: React.FC = () => {
 
 
 
-  const { user, login, activeTab, incidents, addIncident, latitude, longitude, toggleSidebar } = useStore()
+  const { user, login, activeTab, incidents, addIncident, latitude, longitude, toggleSidebar, sandboxName, setSandboxName } = useStore()
 
   // Login slide carousel state
   const [currentSlide, setCurrentSlide] = useState(0)
@@ -67,6 +67,14 @@ export const App: React.FC = () => {
   const [currentPassword, setCurrentPassword] = useState('')
   const [newPassword, setNewPassword] = useState('')
   const [confirmNewPassword, setConfirmNewPassword] = useState('')
+
+  // WhatsApp Reporting Channel clipboard states
+  const [copiedNumber, setCopiedNumber] = useState(false)
+  const [copiedInstructions, setCopiedInstructions] = useState(false)
+
+  // Sandbox name editing state
+  const [editingSandboxName, setEditingSandboxName] = useState(false)
+  const [sandboxNameInput, setSandboxNameInput] = useState(sandboxName)
   const [createSuccess, setCreateSuccess] = useState<string | null>(null)
   const [createError, setCreateError] = useState<string | null>(null)
   const [createLoading, setCreateLoading] = useState(false)
@@ -915,6 +923,98 @@ export const App: React.FC = () => {
                 </div>
               )}
 
+              {/* WhatsApp Reporting Channel Card */}
+              {user?.phoneNumber && (
+                <div className="p-6 bg-brand-navy border border-brand-navy-light rounded-lg shadow-sm">
+                  <div className="flex items-center gap-3 mb-5">
+                    <div className="w-10 h-10 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center">
+                      <MessageSquare className="w-5 h-5 text-emerald-400" />
+                    </div>
+                    <div>
+                      <h3 className="text-sm font-bold text-brand-slate tracking-tight">WhatsApp Reporting Channel</h3>
+                      <p className="text-[10px] text-brand-slate-dark font-mono uppercase tracking-wider">Share this with your community reporters</p>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                    {/* Officer WhatsApp Number */}
+                    <div className="p-4 bg-brand-navy-dark/10 border border-brand-navy-light rounded-md">
+                      <span className="block text-[9px] text-brand-slate-dark font-mono uppercase tracking-wider mb-2">Your WhatsApp Number</span>
+                      <div className="flex items-center justify-between gap-3">
+                        <div className="flex items-center gap-2">
+                          <Smartphone className="w-4 h-4 text-emerald-400" />
+                          <span className="text-lg font-bold text-brand-slate font-mono tracking-wide">
+                            {user.phoneNumber.replace(/(\d{3})(\d{3})(\d{4})/, '$1 $2 $3')}
+                          </span>
+                        </div>
+                        <button
+                          onClick={() => {
+                            navigator.clipboard.writeText(user.phoneNumber || '')
+                            setCopiedNumber(true)
+                            setTimeout(() => setCopiedNumber(false), 2000)
+                          }}
+                          className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/20 rounded-md text-emerald-400 text-[10px] font-bold font-mono uppercase tracking-wider transition cursor-pointer"
+                        >
+                          {copiedNumber ? (
+                            <><Check className="w-3 h-3" /> Copied!</>
+                          ) : (
+                            <><Copy className="w-3 h-3" /> Copy Number</>
+                          )}
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Join Command */}
+                    <div className="p-4 bg-brand-navy-dark/10 border border-brand-navy-light rounded-md">
+                      <span className="block text-[9px] text-brand-slate-dark font-mono uppercase tracking-wider mb-2">Reporter Join Command</span>
+                      <div className="flex items-center justify-between gap-3">
+                        <div className="flex items-center gap-2">
+                          <span className="text-lg font-bold text-brand-teal font-mono">join {sandboxName}</span>
+                        </div>
+                        <button
+                          onClick={() => {
+                            const instructions = `To report a crime via WhatsApp:\n1. Save this number: ${user.phoneNumber}\n2. Open WhatsApp and message that number\n3. Send: join ${sandboxName}\n4. Then type your report with details and location`
+                            navigator.clipboard.writeText(instructions)
+                            setCopiedInstructions(true)
+                            setTimeout(() => setCopiedInstructions(false), 2000)
+                          }}
+                          className="flex items-center gap-1.5 px-3 py-1.5 bg-brand-teal/10 hover:bg-brand-teal/20 border border-brand-teal/20 rounded-md text-brand-teal text-[10px] font-bold font-mono uppercase tracking-wider transition cursor-pointer"
+                        >
+                          {copiedInstructions ? (
+                            <><Check className="w-3 h-3" /> Copied!</>
+                          ) : (
+                            <><Copy className="w-3 h-3" /> Copy Instructions</>
+                          )}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Step-by-step instructions for reporters */}
+                  <div className="mt-4 pt-4 border-t border-brand-navy-light">
+                    <span className="block text-[9px] text-brand-slate-dark font-mono uppercase tracking-wider mb-3">How Reporters Use This</span>
+                    <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
+                      {[
+                        { step: '1', label: 'Save Number', desc: `Save ${user.phoneNumber.replace(/(\d{3})(\d{3})(\d{4})/, '$1 $2 $3')} to contacts` },
+                        { step: '2', label: 'Open WhatsApp', desc: 'Message the saved number' },
+                        { step: '3', label: 'Join Channel', desc: `Send "join ${sandboxName}"` },
+                        { step: '4', label: 'Send Report', desc: 'Type crime details + location' }
+                      ].map((item) => (
+                        <div key={item.step} className="flex items-start gap-2.5 p-3 bg-brand-navy-dark/5 rounded-md border border-brand-navy-light/50">
+                          <div className="w-6 h-6 rounded-full bg-brand-teal/10 border border-brand-teal/20 flex items-center justify-center text-[10px] font-bold text-brand-teal font-mono flex-shrink-0">
+                            {item.step}
+                          </div>
+                          <div>
+                            <span className="block text-[10px] font-bold text-brand-slate">{item.label}</span>
+                            <span className="block text-[9px] text-brand-slate-dark mt-0.5">{item.desc}</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
+
               {/* Real-time Charts Block */}
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
 
@@ -1036,10 +1136,64 @@ export const App: React.FC = () => {
                   <div className="space-y-4">
                     <div className="flex justify-between items-center py-3 border-b border-brand-navy-light">
                       <div>
+                        <span className="block font-bold text-sm text-brand-slate">WhatsApp Sandbox Join Code</span>
+                        <span className="text-xs text-brand-slate-dark">The keyword reporters send to initiate a report (e.g. "join safetynet").</span>
+                      </div>
+                      {editingSandboxName ? (
+                        <div className="flex items-center gap-2">
+                          <input
+                            type="text"
+                            value={sandboxNameInput}
+                            onChange={(e) => setSandboxNameInput(e.target.value.toLowerCase().replace(/\s+/g, '-'))}
+                            className="bg-brand-navy-dark/10 border border-brand-teal/40 rounded-md px-3 py-1 text-xs text-brand-slate font-mono focus:outline-none focus:border-brand-teal transition w-36"
+                            autoFocus
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') {
+                                setSandboxName(sandboxNameInput)
+                                setEditingSandboxName(false)
+                              } else if (e.key === 'Escape') {
+                                setSandboxNameInput(sandboxName)
+                                setEditingSandboxName(false)
+                              }
+                            }}
+                          />
+                          <button
+                            onClick={() => {
+                              setSandboxName(sandboxNameInput)
+                              setEditingSandboxName(false)
+                            }}
+                            className="px-2 py-1 bg-brand-teal/20 border border-brand-teal/30 rounded text-brand-teal text-[10px] font-bold font-mono cursor-pointer hover:bg-brand-teal/30 transition"
+                          >
+                            Save
+                          </button>
+                          <button
+                            onClick={() => {
+                              setSandboxNameInput(sandboxName)
+                              setEditingSandboxName(false)
+                            }}
+                            className="px-2 py-1 bg-brand-navy-dark/10 border border-brand-navy-light rounded text-brand-slate-dark text-[10px] font-bold font-mono cursor-pointer hover:text-brand-slate transition"
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                      ) : (
+                        <button
+                          onClick={() => {
+                            setSandboxNameInput(sandboxName)
+                            setEditingSandboxName(true)
+                          }}
+                          className="text-xs px-3 py-1 font-mono font-bold bg-brand-teal/10 border border-brand-teal/20 rounded-md text-brand-teal cursor-pointer hover:bg-brand-teal/20 transition"
+                        >
+                          {sandboxName}
+                        </button>
+                      )}
+                    </div>
+                    <div className="flex justify-between items-center py-3 border-b border-brand-navy-light">
+                      <div>
                         <span className="block font-bold text-sm text-brand-slate">Twilio Signature Enforcer</span>
                         <span className="text-xs text-brand-slate-dark">Reject webhook calls with invalid HMAC signatures.</span>
                       </div>
-                      <span className="text-xs px-3 py-1 font-mono font-bold bg-brand-navy-dark/10 border border-brand-navy-light rounded-md text-brand-slate-dark">DISABLED (LOCAL_SANDBOX)</span>
+                      <span className="text-xs px-3 py-1 font-mono font-bold bg-brand-navy-dark/10 border border-brand-navy-light rounded-md text-brand-slate-dark">PRODUCTION</span>
                     </div>
                     <div className="flex justify-between items-center py-3 border-b border-brand-navy-light">
                       <div>

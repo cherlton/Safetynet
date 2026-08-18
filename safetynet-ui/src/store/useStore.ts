@@ -10,6 +10,7 @@ interface AppState {
   incidents: Incident[];
   activeTab: 'dashboard' | 'map' | 'reports' | 'notifications' | 'settings';
   sidebarOpen: boolean;
+  sandboxName: string;
   
   // Actions
   login: (user: User, token: string) => void;
@@ -20,6 +21,7 @@ interface AppState {
   setIncidents: (incidents: Incident[]) => void;
   setActiveTab: (tab: 'dashboard' | 'map' | 'reports' | 'notifications' | 'settings') => void;
   toggleSidebar: () => void;
+  setSandboxName: (name: string) => void;
 }
 
 export const useStore = create<AppState>((set) => {
@@ -44,6 +46,7 @@ export const useStore = create<AppState>((set) => {
     incidents: [],
     activeTab: (localStorage.getItem('safetynet_last_active_tab') as 'dashboard' | 'map' | 'reports' | 'notifications' | 'settings') || 'dashboard',
     sidebarOpen: true,
+    sandboxName: localStorage.getItem('safetynet_sandbox_name') || 'safetynet',
 
     login: (user, token) => {
       localStorage.setItem('safetynet_auth_token', token);
@@ -74,5 +77,9 @@ export const useStore = create<AppState>((set) => {
       set({ activeTab: tab });
     },
     toggleSidebar: () => set((state) => ({ sidebarOpen: !state.sidebarOpen })),
+    setSandboxName: (name) => {
+      localStorage.setItem('safetynet_sandbox_name', name);
+      set({ sandboxName: name });
+    },
   };
 })
