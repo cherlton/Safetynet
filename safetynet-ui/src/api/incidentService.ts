@@ -41,7 +41,7 @@ export const incidentService = {
   /**
    * Sends a simulated incoming citizen WhatsApp message directly to the backend webhook.
    */
-  async simulateWhatsAppIngest(textMessage: string, latitude: number, longitude: number): Promise<void> {
+  async simulateWhatsAppIngest(textMessage: string, latitude: number, longitude: number): Promise<string> {
     const formParams = new URLSearchParams()
     formParams.append('From', 'whatsapp:+27829999876')
     formParams.append('Body', textMessage)
@@ -57,5 +57,6 @@ export const incidentService = {
     if (!response.ok) {
       throw new Error(`Failed to ingest WhatsApp simulation. Server status: ${response.status}`)
     }
+    return response.text()
   }
 }

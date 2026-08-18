@@ -24,6 +24,10 @@ export interface Incident {
   isAnonymous?: boolean | null;
   reporterPicture?: string | null;
   mediaUrl?: string | null;
+  aiSummary?: string | null;
+  recommendedUnit?: string | null;
+  tacticalBrief?: string | null;
+  visualAnalysis?: string | null;
 }
 
 export interface RealtimeAlert {

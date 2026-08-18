@@ -1,13 +1,14 @@
 import React, { useState } from 'react'
 import { useStore } from '../store/useStore'
-import { FolderOpen, X, MapPin, User, ShieldCheck, Phone, Check } from 'lucide-react'
+import { FolderOpen, X, MapPin, User, ShieldCheck, Phone, Check, Image, ZoomIn, Sparkles, ShieldAlert, Radio, Eye } from 'lucide-react'
 
 export const IncidentFeed: React.FC = () => {
-  const { incidents, setCoords, setActiveTab } = useStore()
+  const { incidents, setCoords, setActiveTab, user } = useStore()
   const [searchTerm, setSearchTerm] = useState('')
   const [severityFilter, setSeverityFilter] = useState<number | 'ALL'>('ALL')
   const [selectedIncident, setSelectedIncident] = useState<typeof incidents[0] | null>(null)
   const [copied, setCopied] = useState(false)
+  const [mediaLightbox, setMediaLightbox] = useState(false)
 
   const filteredIncidents = incidents.filter((inc) => {
     const matchesSearch = inc.cleanText.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -104,6 +105,12 @@ export const IncidentFeed: React.FC = () => {
                     <span className="text-[9px] text-brand-slate-dark font-mono">
                       {new Date(incident.reportedAt).toLocaleTimeString()}
                     </span>
+                    {incident.recommendedUnit && (
+                      <span className="text-[9px] font-mono font-bold px-2 py-0.5 rounded bg-brand-red/10 text-brand-red border border-brand-red/20 uppercase flex items-center gap-1">
+                        <Radio className="w-2.5 h-2.5" />
+                        {incident.recommendedUnit.replace(/_/g, ' ')}
+                      </span>
+                    )}
                     {incident.reporterLocation && (
                       <span className="text-[9px] font-mono text-brand-teal flex items-center gap-1">
                         <MapPin className="w-3 h-3" />
@@ -114,6 +121,12 @@ export const IncidentFeed: React.FC = () => {
                   <p className="text-brand-slate text-sm font-medium line-clamp-2">
                     "{incident.cleanText}"
                   </p>
+                  {incident.aiSummary && (
+                    <p className="text-brand-slate-dark text-xs flex items-center gap-1.5 line-clamp-1">
+                      <Sparkles className="w-3 h-3 text-brand-teal flex-shrink-0" />
+                      <span className="text-neutral-300 font-mono text-[10px]">{incident.aiSummary}</span>
+                    </p>
+                  )}
                 </div>
 
                 {/* Right Status / Reporter Tag */}
@@ -198,45 +211,89 @@ export const IncidentFeed: React.FC = () => {
                     <ShieldCheck className="w-4 h-4 text-brand-teal" />
                     <span>POPIA Privacy Protection Active (Reporter chose to remain anonymous)</span>
                   </div>
-                ) : (
-                  <div className="flex items-center gap-3">
-                    <div className="relative group/modal">
-                      {selectedIncident.reporterPicture ? (
-                        <img src={selectedIncident.reporterPicture} alt="Avatar" className="w-9 h-9 rounded-full object-cover border border-brand-teal cursor-pointer" />
-                      ) : (
-                        <div className="w-9 h-9 rounded-full bg-brand-teal/10 border border-brand-teal/30 flex items-center justify-center text-brand-teal font-bold font-mono text-xs cursor-pointer">
-                          {(selectedIncident.reporterName || 'U').substring(0, 2).toUpperCase()}
-                        </div>
-                      )}
+                ) : (() => {
+                  const effectivePicture = selectedIncident.reporterPicture || 
+                    (user?.picture && (
+                      (user.phoneNumber && selectedIncident.whatsappNumber && user.phoneNumber.replace(/\D/g, '') === selectedIncident.whatsappNumber.replace(/\D/g, '')) ||
+                      (user.username && selectedIncident.reporterName && user.username.toLowerCase() === selectedIncident.reporterName.toLowerCase())
+                    ) ? user.picture : null);
 
-                      {/* Hover Picture Preview in Modal */}
-                      {selectedIncident.reporterPicture && (
-                        <div className="absolute bottom-full left-0 mb-2 hidden group-hover/modal:flex flex-col items-center z-50 pointer-events-none animate-fade-in">
-                          <div className="bg-neutral-900 border border-neutral-700 rounded-xl shadow-2xl p-2 backdrop-blur-sm">
-                            <img
-                              src={selectedIncident.reporterPicture}
-                              alt={selectedIncident.reporterName || 'Reporter'}
-                              className="w-32 h-32 rounded-lg object-cover"
-                            />
-                            <div className="text-center mt-2 px-1">
-                              <div className="text-xs font-bold text-white">{selectedIncident.reporterName}</div>
-                              <div className="text-[9px] text-neutral-400 font-mono mt-0.5">{selectedIncident.whatsappNumber || selectedIncident.reporterContact || ''}</div>
+                  const reporterInitials = (selectedIncident.reporterName || 'CH')
+                    .split(' ')
+                    .map(n => n[0])
+                    .join('')
+                    .substring(0, 2)
+                    .toUpperCase();
+
+                  return (
+                    <div className="flex items-center gap-3">
+                      {/* Avatar with Circular Hover Popup */}
+                      <div className="relative group/avatar cursor-pointer">
+                        {effectivePicture ? (
+                          <img
+                            src={effectivePicture}
+                            alt="Avatar"
+                            className="w-10 h-10 rounded-full object-cover border-2 border-brand-teal ring-2 ring-brand-teal/20 shadow-md transition-transform duration-200 group-hover/avatar:scale-105"
+                          />
+                        ) : (
+                          <div className="w-10 h-10 rounded-full bg-brand-teal/10 border-2 border-brand-teal/40 flex items-center justify-center text-brand-teal font-bold font-mono text-sm shadow-sm transition-transform duration-200 group-hover/avatar:scale-105">
+                            {reporterInitials}
+                          </div>
+                        )}
+
+                        {/* Circular Mini Pop-up on Hover (Positioned below the avatar) */}
+                        <div className="absolute top-full left-0 mt-2.5 hidden group-hover/avatar:flex flex-col items-center z-[1300] pointer-events-none animate-fade-in">
+                          {/* Upward Caret Arrow */}
+                          <div className="w-3 h-3 bg-neutral-900 border-l border-t border-neutral-700 rotate-45 mb-[-6px] z-10 self-start ml-3"></div>
+                          
+                          <div className="bg-neutral-900/98 border border-neutral-700/80 rounded-2xl shadow-2xl p-4 backdrop-blur-md flex flex-col items-center gap-2.5 min-w-[180px]">
+                            {/* Circular Profile Picture View */}
+                            <div className="relative">
+                              {effectivePicture ? (
+                                <img
+                                  src={effectivePicture}
+                                  alt={selectedIncident.reporterName || 'Reporter Profile'}
+                                  className="w-16 h-16 rounded-full object-cover border-2 border-brand-teal shadow-lg ring-4 ring-brand-teal/20"
+                                />
+                              ) : (
+                                <div className="w-16 h-16 rounded-full bg-gradient-to-br from-brand-teal/25 to-neutral-800 border-2 border-brand-teal/60 flex items-center justify-center text-brand-teal font-bold font-mono text-xl shadow-inner">
+                                  {reporterInitials}
+                                </div>
+                              )}
+                              <div className="absolute bottom-0 right-0 w-3.5 h-3.5 bg-emerald-500 rounded-full border-2 border-neutral-900 shadow" title="WhatsApp Connected" />
+                            </div>
+
+                            <div className="text-center">
+                              <div className="text-xs font-bold text-white tracking-wide">
+                                {selectedIncident.reporterName || 'Verified Citizen'}
+                              </div>
+                              <div className="text-[9px] text-emerald-400 font-mono mt-0.5 flex items-center justify-center gap-1">
+                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                                WhatsApp Verified
+                              </div>
+                              <div className="text-[9px] text-neutral-400 font-mono mt-0.5">
+                                {selectedIncident.whatsappNumber || selectedIncident.reporterContact || ''}
+                              </div>
                             </div>
                           </div>
-                          <div className="w-2.5 h-2.5 bg-neutral-900 border-r border-b border-neutral-700 rotate-45 -mt-1.5"></div>
                         </div>
-                      )}
-                    </div>
+                      </div>
 
-                    <div className="text-left">
-                      <div className="text-xs font-bold text-brand-slate">{selectedIncident.reporterName || 'Verified Citizen'}</div>
-                      <div className="text-[10px] text-brand-slate-dark font-mono flex items-center gap-1.5">
-                        <Phone className="w-3 h-3 text-brand-teal" />
-                        <span>{selectedIncident.whatsappNumber || selectedIncident.reporterContact || 'Contact Verified'}</span>
+                      <div className="text-left">
+                        <div className="text-xs font-bold text-brand-slate flex items-center gap-1.5">
+                          <span>{selectedIncident.reporterName || 'Verified Citizen'}</span>
+                          <span className="text-[9px] px-1.5 py-0.2 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded font-mono">
+                            VERIFIED
+                          </span>
+                        </div>
+                        <div className="text-[10px] text-brand-slate-dark font-mono flex items-center gap-1.5 mt-0.5">
+                          <Phone className="w-3 h-3 text-brand-teal" />
+                          <span>{selectedIncident.whatsappNumber || selectedIncident.reporterContact || 'Contact Verified'}</span>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                )}
+                  );
+                })()}
               </div>
 
               {/* Badges details */}
@@ -255,6 +312,37 @@ export const IncidentFeed: React.FC = () => {
                 </div>
               </div>
 
+              {/* AI Emergency Triage & Tactical Dispatch Section */}
+              {(selectedIncident.aiSummary || selectedIncident.recommendedUnit || selectedIncident.tacticalBrief) && (
+                <div className="p-3.5 bg-brand-navy-dark/20 border border-brand-teal/30 rounded-lg mb-4 space-y-2.5 shadow-sm">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] font-bold text-brand-teal font-mono uppercase flex items-center gap-1.5">
+                      <Sparkles className="w-3.5 h-3.5 text-brand-teal animate-pulse" />
+                      Gemini AI Situation & Tactical Dispatch
+                    </span>
+                    {selectedIncident.recommendedUnit && (
+                      <span className="px-2 py-0.5 bg-brand-red/15 text-brand-red border border-brand-red/30 rounded text-[9px] font-mono font-bold uppercase tracking-wider flex items-center gap-1">
+                        <Radio className="w-2.5 h-2.5" />
+                        {selectedIncident.recommendedUnit.replace(/_/g, ' ')}
+                      </span>
+                    )}
+                  </div>
+
+                  {selectedIncident.aiSummary && (
+                    <div className="text-xs text-white/90 font-medium leading-relaxed">
+                      {selectedIncident.aiSummary}
+                    </div>
+                  )}
+
+                  {selectedIncident.tacticalBrief && (
+                    <div className="p-2 rounded bg-neutral-900/60 border border-neutral-800 text-[10px] text-neutral-300 font-mono flex items-start gap-2">
+                      <ShieldAlert className="w-3.5 h-3.5 text-brand-amber flex-shrink-0 mt-0.5" />
+                      <span>{selectedIncident.tacticalBrief}</span>
+                    </div>
+                  )}
+                </div>
+              )}
+
               {/* Witness Report Content */}
               <div className="space-y-1 mb-4">
                 <span className="text-[10px] text-brand-slate-dark font-mono uppercase">Incident Description</span>
@@ -265,15 +353,41 @@ export const IncidentFeed: React.FC = () => {
 
               {/* Attached Evidence Photo (if provided via WhatsApp) */}
               {selectedIncident.mediaUrl && (
-                <div className="space-y-1 mb-4">
-                  <span className="text-[10px] text-brand-slate-dark font-mono uppercase">Attached Scene Evidence / Photo</span>
-                  <div className="p-2 rounded bg-brand-navy-dark/10 border border-brand-navy-light flex justify-center">
+                <div className="space-y-2 mb-4">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] text-brand-slate-dark font-mono uppercase flex items-center gap-1.5">
+                      <Image className="w-3 h-3 text-brand-teal" />
+                      Attached WhatsApp Media / Evidence
+                    </span>
+                    <span className="text-[9px] text-brand-teal font-mono">1 Attachment</span>
+                  </div>
+                  <div 
+                    onClick={() => setMediaLightbox(true)}
+                    className="relative group/media rounded-lg overflow-hidden border border-brand-navy-light bg-black/40 cursor-pointer flex justify-center items-center p-1.5 hover:border-brand-teal transition duration-200"
+                  >
                     <img
                       src={selectedIncident.mediaUrl}
                       alt="Incident Evidence"
-                      className="max-h-56 w-auto rounded-md object-contain border border-neutral-700 shadow-md"
+                      className="max-h-56 w-full rounded-md object-contain transition-transform duration-200 group-hover/media:scale-[1.01]"
                     />
+                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/media:opacity-100 transition-opacity duration-200 flex items-center justify-center gap-2 text-white text-xs font-mono">
+                      <ZoomIn className="w-4 h-4 text-brand-teal" />
+                      <span>Click to enlarge</span>
+                    </div>
                   </div>
+
+                  {/* Gemini Multimodal Vision Analysis */}
+                  {selectedIncident.visualAnalysis && (
+                    <div className="p-2.5 bg-neutral-900/80 border border-brand-teal/20 rounded-md text-[10px] text-neutral-300 font-mono space-y-1">
+                      <div className="flex items-center gap-1.5 text-brand-teal font-bold uppercase text-[9px]">
+                        <Eye className="w-3 h-3" />
+                        Gemini Vision Forensic Analysis
+                      </div>
+                      <p className="leading-relaxed text-neutral-300 italic">
+                        "{selectedIncident.visualAnalysis}"
+                      </p>
+                    </div>
+                  )}
                 </div>
               )}
 
@@ -310,6 +424,37 @@ export const IncidentFeed: React.FC = () => {
             >
               Close Auditor
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* Fullscreen Media Lightbox */}
+      {mediaLightbox && selectedIncident?.mediaUrl && (
+        <div 
+          onClick={() => setMediaLightbox(false)}
+          className="fixed inset-0 z-[1200] bg-black/90 backdrop-blur-md flex items-center justify-center p-4 cursor-pointer animate-fade-in"
+        >
+          <div className="relative max-w-4xl max-h-[90vh] flex flex-col items-center" onClick={(e) => e.stopPropagation()}>
+            <div className="flex justify-between items-center w-full pb-2 mb-2 border-b border-neutral-800 text-neutral-300 font-mono text-xs">
+              <span className="flex items-center gap-2">
+                <Image className="w-4 h-4 text-brand-teal" />
+                Evidence Media — Report #{selectedIncident.id}
+              </span>
+              <button 
+                onClick={() => setMediaLightbox(false)}
+                className="w-8 h-8 rounded-full bg-neutral-800 hover:bg-neutral-700 text-white flex items-center justify-center transition"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            <img
+              src={selectedIncident.mediaUrl}
+              alt="Expanded Incident Evidence"
+              className="max-h-[75vh] w-auto rounded-lg object-contain border border-neutral-800 shadow-2xl"
+            />
+            <div className="text-neutral-400 font-mono text-[10px] mt-2">
+              Captured via WhatsApp Citizen Ingest Pipeline
+            </div>
           </div>
         </div>
       )}

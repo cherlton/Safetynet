@@ -286,9 +286,21 @@ export const App: React.FC = () => {
     const lng = centerLng + selected.lngOffset
 
     try {
-      // Dispatches raw message parameters directly using our new modular api service
-      await incidentService.simulateWhatsAppIngest(selected.text, lat, lng)
+      // Dispatches raw message parameters directly using our modular api service
+      const twimlResponse = await incidentService.simulateWhatsAppIngest(selected.text, lat, lng)
       console.log("WhatsApp signal simulation dispatched successfully to backend webhook!")
+
+      // Parse text out of TwiML <Message> tag
+      const match = twimlResponse.match(/<Message>([\s\S]*?)<\/Message>/)
+      const replyText = match 
+        ? match[1].replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>') 
+        : 'Signal processed by backend webhook.'
+
+      setRealtimeAlert({
+        title: "WHATSAPP RESPONSE DISPATCHED",
+        desc: replyText
+      })
+      setTimeout(() => setRealtimeAlert(null), 7000)
     } catch (err) {
       console.warn("Direct Ingest API call failed. Falling back to local standalone sandbox simulation.", err)
 
