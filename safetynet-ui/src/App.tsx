@@ -10,7 +10,7 @@ import { useWebSocket } from './hooks/useWebSocket'
 import { useNearbyIncidents } from './hooks/useNearbyIncidents'
 import { incidentService } from './api/incidentService'
 import { authService } from './api/authService'
-import { Activity, AlertTriangle, Loader2, Key, Lock, Settings, Menu, Bell, Copy, Check, MessageSquare, Smartphone, ExternalLink, Info, Send, CheckCircle2, Shield } from 'lucide-react'
+import { Activity, AlertTriangle, Loader2, Key, Lock, Settings, Menu, Bell, Copy, Check, MessageSquare, Smartphone, ExternalLink, Info, Send, Shield } from 'lucide-react'
 import safetynetLogo from './assets/safetynet_logo.png'
 import heroSlide1 from './assets/images/hero_slide_1.png'
 import heroSlide2 from './assets/images/hero_slide_2.png'
@@ -138,7 +138,7 @@ export const App: React.FC = () => {
           .join('')
       );
       const googleUser = JSON.parse(jsonPayload);
-      
+
       const authResult = await authService.checkGoogleLogin({
         email: googleUser.email,
         name: googleUser.name,
@@ -304,8 +304,8 @@ export const App: React.FC = () => {
 
       // Parse text out of TwiML <Message> tag
       const match = twimlResponse.match(/<Message>([\s\S]*?)<\/Message>/)
-      const replyText = match 
-        ? match[1].replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>') 
+      const replyText = match
+        ? match[1].replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>')
         : 'Signal processed by backend webhook.'
 
       setRealtimeAlert({
@@ -1070,7 +1070,7 @@ export const App: React.FC = () => {
                   <span>Important: How WhatsApp Webhook Routing Works</span>
                 </div>
                 <p className="text-neutral-300 leading-relaxed">
-                  In Twilio sandbox mode, incoming messages must be sent to <strong>Twilio's Sandbox WhatsApp number (<span className="text-white font-mono">{twilioSandboxNumber}</span>)</strong> with the command <span className="text-emerald-400 font-mono font-bold">join {sandboxName}</span>. 
+                  In Twilio sandbox mode, incoming messages must be sent to <strong>Twilio's Sandbox WhatsApp number (<span className="text-white font-mono">{twilioSandboxNumber}</span>)</strong> with the command <span className="text-emerald-400 font-mono font-bold">join {sandboxName}</span>.
                   WhatsApp does not route messages sent to personal cell numbers through Twilio webhooks unless that number is registered as a dedicated Twilio/Meta Business sender.
                 </p>
               </div>
@@ -1184,7 +1184,7 @@ export const App: React.FC = () => {
                 </div>
 
                 <div className="p-4 bg-brand-navy-dark/20 border border-brand-navy-light rounded-md font-mono text-xs text-neutral-300 space-y-2 whitespace-pre-wrap">
-{`🚨 *SAFETYNET CITIZEN CRIME REPORTING INSTRUCTIONS* 🚨
+                  {`🚨 *SAFETYNET CITIZEN CRIME REPORTING INSTRUCTIONS* 🚨
 
 1️⃣ Save this WhatsApp number: ${twilioSandboxNumber}
 2️⃣ Send this message to connect: join ${sandboxName}
