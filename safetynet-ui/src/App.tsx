@@ -10,7 +10,7 @@ import { useWebSocket } from './hooks/useWebSocket'
 import { useNearbyIncidents } from './hooks/useNearbyIncidents'
 import { incidentService } from './api/incidentService'
 import { authService } from './api/authService'
-import { Activity, AlertTriangle, Loader2, Key, Lock, Settings, Menu, Bell, Copy, Check, MessageSquare, Smartphone } from 'lucide-react'
+import { Activity, AlertTriangle, Loader2, Key, Lock, Settings, Menu, Bell, Copy, Check, MessageSquare, Smartphone, ExternalLink, Info, Send, CheckCircle2, Shield } from 'lucide-react'
 import safetynetLogo from './assets/safetynet_logo.png'
 import heroSlide1 from './assets/images/hero_slide_1.png'
 import heroSlide2 from './assets/images/hero_slide_2.png'
@@ -19,7 +19,7 @@ export const App: React.FC = () => {
 
 
 
-  const { user, login, activeTab, incidents, addIncident, latitude, longitude, toggleSidebar, sandboxName, setSandboxName } = useStore()
+  const { user, login, activeTab, incidents, addIncident, latitude, longitude, toggleSidebar, sandboxName, setSandboxName, twilioSandboxNumber, setTwilioSandboxNumber, setActiveTab } = useStore()
 
   // Login slide carousel state
   const [currentSlide, setCurrentSlide] = useState(0)
@@ -71,10 +71,14 @@ export const App: React.FC = () => {
   // WhatsApp Reporting Channel clipboard states
   const [copiedNumber, setCopiedNumber] = useState(false)
   const [copiedInstructions, setCopiedInstructions] = useState(false)
+  const [copiedTwilioNumber, setCopiedTwilioNumber] = useState(false)
+  const [copiedJoinCommand, setCopiedJoinCommand] = useState(false)
 
   // Sandbox name editing state
   const [editingSandboxName, setEditingSandboxName] = useState(false)
   const [sandboxNameInput, setSandboxNameInput] = useState(sandboxName)
+  const [editingTwilioNumber, setEditingTwilioNumber] = useState(false)
+  const [twilioNumberInput, setTwilioNumberInput] = useState(twilioSandboxNumber)
   const [createSuccess, setCreateSuccess] = useState<string | null>(null)
   const [createError, setCreateError] = useState<string | null>(null)
   const [createLoading, setCreateLoading] = useState(false)
@@ -923,94 +927,32 @@ export const App: React.FC = () => {
                 </div>
               )}
 
-              {/* WhatsApp Reporting Channel Card */}
+              {/* WhatsApp Reporting Channel Banner */}
               {user?.phoneNumber && (
-                <div className="p-6 bg-brand-navy border border-brand-navy-light rounded-lg shadow-sm">
-                  <div className="flex items-center gap-3 mb-5">
-                    <div className="w-10 h-10 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center">
-                      <MessageSquare className="w-5 h-5 text-emerald-400" />
+                <div className="p-4 bg-brand-navy border border-brand-navy-light rounded-lg shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-9 h-9 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center flex-shrink-0">
+                      <MessageSquare className="w-4 h-4 text-emerald-400" />
                     </div>
                     <div>
-                      <h3 className="text-sm font-bold text-brand-slate tracking-tight">WhatsApp Reporting Channel</h3>
-                      <p className="text-[10px] text-brand-slate-dark font-mono uppercase tracking-wider">Share this with your community reporters</p>
+                      <div className="flex items-center gap-2">
+                        <h3 className="text-xs font-bold text-brand-slate">WhatsApp Citizen Ingestion Active</h3>
+                        <span className="text-[9px] px-1.5 py-0.5 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded font-mono font-bold">ONLINE</span>
+                      </div>
+                      <p className="text-[10px] text-brand-slate-dark mt-0.5 font-mono">
+                        Twilio Ingest: <span className="text-brand-slate font-bold">{twilioSandboxNumber}</span> • Code: <span className="text-brand-teal font-bold">join {sandboxName}</span>
+                      </p>
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                    {/* Officer WhatsApp Number */}
-                    <div className="p-4 bg-brand-navy-dark/10 border border-brand-navy-light rounded-md">
-                      <span className="block text-[9px] text-brand-slate-dark font-mono uppercase tracking-wider mb-2">Your WhatsApp Number</span>
-                      <div className="flex items-center justify-between gap-3">
-                        <div className="flex items-center gap-2">
-                          <Smartphone className="w-4 h-4 text-emerald-400" />
-                          <span className="text-lg font-bold text-brand-slate font-mono tracking-wide">
-                            {user.phoneNumber.replace(/(\d{3})(\d{3})(\d{4})/, '$1 $2 $3')}
-                          </span>
-                        </div>
-                        <button
-                          onClick={() => {
-                            navigator.clipboard.writeText(user.phoneNumber || '')
-                            setCopiedNumber(true)
-                            setTimeout(() => setCopiedNumber(false), 2000)
-                          }}
-                          className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/20 rounded-md text-emerald-400 text-[10px] font-bold font-mono uppercase tracking-wider transition cursor-pointer"
-                        >
-                          {copiedNumber ? (
-                            <><Check className="w-3 h-3" /> Copied!</>
-                          ) : (
-                            <><Copy className="w-3 h-3" /> Copy Number</>
-                          )}
-                        </button>
-                      </div>
-                    </div>
-
-                    {/* Join Command */}
-                    <div className="p-4 bg-brand-navy-dark/10 border border-brand-navy-light rounded-md">
-                      <span className="block text-[9px] text-brand-slate-dark font-mono uppercase tracking-wider mb-2">Reporter Join Command</span>
-                      <div className="flex items-center justify-between gap-3">
-                        <div className="flex items-center gap-2">
-                          <span className="text-lg font-bold text-brand-teal font-mono">join {sandboxName}</span>
-                        </div>
-                        <button
-                          onClick={() => {
-                            const instructions = `To report a crime via WhatsApp:\n1. Save this number: ${user.phoneNumber}\n2. Open WhatsApp and message that number\n3. Send: join ${sandboxName}\n4. Then type your report with details and location`
-                            navigator.clipboard.writeText(instructions)
-                            setCopiedInstructions(true)
-                            setTimeout(() => setCopiedInstructions(false), 2000)
-                          }}
-                          className="flex items-center gap-1.5 px-3 py-1.5 bg-brand-teal/10 hover:bg-brand-teal/20 border border-brand-teal/20 rounded-md text-brand-teal text-[10px] font-bold font-mono uppercase tracking-wider transition cursor-pointer"
-                        >
-                          {copiedInstructions ? (
-                            <><Check className="w-3 h-3" /> Copied!</>
-                          ) : (
-                            <><Copy className="w-3 h-3" /> Copy Instructions</>
-                          )}
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Step-by-step instructions for reporters */}
-                  <div className="mt-4 pt-4 border-t border-brand-navy-light">
-                    <span className="block text-[9px] text-brand-slate-dark font-mono uppercase tracking-wider mb-3">How Reporters Use This</span>
-                    <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
-                      {[
-                        { step: '1', label: 'Save Number', desc: `Save ${user.phoneNumber.replace(/(\d{3})(\d{3})(\d{4})/, '$1 $2 $3')} to contacts` },
-                        { step: '2', label: 'Open WhatsApp', desc: 'Message the saved number' },
-                        { step: '3', label: 'Join Channel', desc: `Send "join ${sandboxName}"` },
-                        { step: '4', label: 'Send Report', desc: 'Type crime details + location' }
-                      ].map((item) => (
-                        <div key={item.step} className="flex items-start gap-2.5 p-3 bg-brand-navy-dark/5 rounded-md border border-brand-navy-light/50">
-                          <div className="w-6 h-6 rounded-full bg-brand-teal/10 border border-brand-teal/20 flex items-center justify-center text-[10px] font-bold text-brand-teal font-mono flex-shrink-0">
-                            {item.step}
-                          </div>
-                          <div>
-                            <span className="block text-[10px] font-bold text-brand-slate">{item.label}</span>
-                            <span className="block text-[9px] text-brand-slate-dark mt-0.5">{item.desc}</span>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => setActiveTab('channel')}
+                      className="px-3 py-1.5 bg-black hover:bg-neutral-900 text-white text-xs font-bold font-mono rounded-md transition cursor-pointer flex items-center gap-1.5 uppercase tracking-wider"
+                    >
+                      <MessageSquare className="w-3.5 h-3.5" />
+                      <span>Manage Channel</span>
+                    </button>
                   </div>
                 </div>
               )}
@@ -1088,7 +1030,196 @@ export const App: React.FC = () => {
             </div>
           )}
 
-          {/* TAB 4: SYSTEM SETTINGS WITH NESTED SUB-PAGES */}
+          {/* TAB 4: WHATSAPP REPORTING CHANNEL HUB */}
+          {activeTab === 'channel' && (
+            <div className="max-w-4xl space-y-6 animate-fade-in text-left">
+              {/* Channel Header Banner */}
+              <div className="p-6 bg-brand-navy border border-brand-navy-light rounded-lg shadow-sm">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                  <div className="flex items-center gap-3.5">
+                    <div className="w-12 h-12 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center flex-shrink-0">
+                      <MessageSquare className="w-6 h-6 text-emerald-400" />
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <h3 className="text-base font-bold text-brand-slate tracking-tight">WhatsApp Citizen Reporting Channel</h3>
+                        <span className="text-[9px] px-2 py-0.5 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded font-mono font-bold">ONLINE (PROD / RENDER)</span>
+                      </div>
+                      <p className="text-xs text-brand-slate-dark mt-1 font-mono">
+                        Direct webhook link: <span className="text-brand-slate">https://safetynet-wl5f.onrender.com/webhook/whatsapp</span>
+                      </p>
+                    </div>
+                  </div>
+
+                  <a
+                    href={`https://wa.me/${twilioSandboxNumber.replace(/\D/g, '')}?text=join%20${encodeURIComponent(sandboxName)}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-2 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-md shadow-sm transition cursor-pointer font-mono"
+                  >
+                    <span>Launch in WhatsApp</span>
+                    <ExternalLink className="w-3.5 h-3.5" />
+                  </a>
+                </div>
+              </div>
+
+              {/* Architecture Alert / Explanation */}
+              <div className="p-4 bg-blue-500/10 border border-blue-500/20 rounded-lg text-xs text-brand-slate space-y-2">
+                <div className="flex items-center gap-2 font-bold text-blue-400 font-mono text-[11px] uppercase">
+                  <Info className="w-4 h-4" />
+                  <span>Important: How WhatsApp Webhook Routing Works</span>
+                </div>
+                <p className="text-neutral-300 leading-relaxed">
+                  In Twilio sandbox mode, incoming messages must be sent to <strong>Twilio's Sandbox WhatsApp number (<span className="text-white font-mono">{twilioSandboxNumber}</span>)</strong> with the command <span className="text-emerald-400 font-mono font-bold">join {sandboxName}</span>. 
+                  WhatsApp does not route messages sent to personal cell numbers through Twilio webhooks unless that number is registered as a dedicated Twilio/Meta Business sender.
+                </p>
+              </div>
+
+              {/* Grid of Key Channel Parameters */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {/* 1. Twilio Ingestion Number */}
+                <div className="p-5 bg-brand-navy border border-brand-navy-light rounded-lg shadow-sm space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] font-mono font-bold text-brand-slate-dark uppercase tracking-wider">1. Twilio Ingest Number</span>
+                    <span className="text-[9px] px-1.5 py-0.5 bg-brand-navy-dark/20 text-brand-teal rounded font-mono">Twilio Cloud</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Smartphone className="w-5 h-5 text-emerald-400 flex-shrink-0" />
+                    <span className="text-base font-bold text-brand-slate font-mono tracking-wide truncate">
+                      {twilioSandboxNumber}
+                    </span>
+                  </div>
+                  <button
+                    onClick={() => {
+                      navigator.clipboard.writeText(twilioSandboxNumber)
+                      setCopiedTwilioNumber(true)
+                      setTimeout(() => setCopiedTwilioNumber(false), 2000)
+                    }}
+                    className="w-full py-2 bg-brand-navy-dark/10 hover:bg-brand-navy-dark/20 border border-brand-navy-light rounded text-[10px] font-mono font-bold text-brand-slate transition cursor-pointer flex items-center justify-center gap-1.5 uppercase"
+                  >
+                    {copiedTwilioNumber ? (
+                      <><Check className="w-3 h-3 text-emerald-400" /> Copied Number</>
+                    ) : (
+                      <><Copy className="w-3 h-3" /> Copy Ingest Number</>
+                    )}
+                  </button>
+                </div>
+
+                {/* 2. Join Keyword */}
+                <div className="p-5 bg-brand-navy border border-brand-navy-light rounded-lg shadow-sm space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] font-mono font-bold text-brand-slate-dark uppercase tracking-wider">2. Sandbox Join Keyword</span>
+                    <span className="text-[9px] px-1.5 py-0.5 bg-brand-teal/10 text-brand-teal rounded font-mono">Required First</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-base font-extrabold text-brand-teal font-mono">
+                      join {sandboxName}
+                    </span>
+                  </div>
+                  <button
+                    onClick={() => {
+                      navigator.clipboard.writeText(`join ${sandboxName}`)
+                      setCopiedJoinCommand(true)
+                      setTimeout(() => setCopiedJoinCommand(false), 2000)
+                    }}
+                    className="w-full py-2 bg-brand-teal/10 hover:bg-brand-teal/20 border border-brand-teal/20 rounded text-[10px] font-mono font-bold text-brand-teal transition cursor-pointer flex items-center justify-center gap-1.5 uppercase"
+                  >
+                    {copiedJoinCommand ? (
+                      <><Check className="w-3 h-3" /> Copied Command</>
+                    ) : (
+                      <><Copy className="w-3 h-3" /> Copy Join Command</>
+                    )}
+                  </button>
+                </div>
+
+                {/* 3. Officer Registered Contact */}
+                <div className="p-5 bg-brand-navy border border-brand-navy-light rounded-lg shadow-sm space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] font-mono font-bold text-brand-slate-dark uppercase tracking-wider">3. Officer Cell Number</span>
+                    <span className="text-[9px] px-1.5 py-0.5 bg-brand-navy-dark/20 text-brand-slate-dark rounded font-mono">Admin Profile</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Shield className="w-5 h-5 text-brand-slate-dark flex-shrink-0" />
+                    <span className="text-base font-bold text-brand-slate font-mono tracking-wide truncate">
+                      {user?.phoneNumber ? user.phoneNumber.replace(/(\d{3})(\d{3})(\d{4})/, '$1 $2 $3') : 'Not Set'}
+                    </span>
+                  </div>
+                  <button
+                    onClick={() => {
+                      if (user?.phoneNumber) {
+                        navigator.clipboard.writeText(user.phoneNumber)
+                        setCopiedNumber(true)
+                        setTimeout(() => setCopiedNumber(false), 2000)
+                      }
+                    }}
+                    disabled={!user?.phoneNumber}
+                    className="w-full py-2 bg-brand-navy-dark/10 hover:bg-brand-navy-dark/20 border border-brand-navy-light disabled:opacity-40 rounded text-[10px] font-mono font-bold text-brand-slate transition cursor-pointer flex items-center justify-center gap-1.5 uppercase"
+                  >
+                    {copiedNumber ? (
+                      <><Check className="w-3 h-3 text-emerald-400" /> Copied Cell</>
+                    ) : (
+                      <><Copy className="w-3 h-3" /> Copy Officer Cell</>
+                    )}
+                  </button>
+                </div>
+              </div>
+
+              {/* Ready-to-share message template */}
+              <div className="p-6 bg-brand-navy border border-brand-navy-light rounded-lg shadow-sm space-y-4">
+                <div className="flex items-center justify-between">
+                  <h4 className="text-xs font-bold text-brand-slate uppercase font-mono tracking-wider">
+                    Ready-to-Share Instructions for Reporters / Citizens
+                  </h4>
+                  <button
+                    onClick={() => {
+                      const shareTemplate = `🚨 *SAFETYNET CITIZEN CRIME REPORTING INSTRUCTIONS* 🚨\n\nTo report suspicious activity or crimes anonymously:\n\n1️⃣ Save this WhatsApp number: *${twilioSandboxNumber}*\n2️⃣ Send this message to connect: *join ${sandboxName}*\n3️⃣ Once joined, send your report description and location!\n\n_Officer in charge: ${user?.username || 'Dispatcher'} (${user?.phoneNumber || ''})_\n_Your report is automatically anonymized & routed to response units._`
+                      navigator.clipboard.writeText(shareTemplate)
+                      setCopiedInstructions(true)
+                      setTimeout(() => setCopiedInstructions(false), 2000)
+                    }}
+                    className="px-3 py-1.5 bg-black hover:bg-neutral-900 text-white text-xs font-bold font-mono rounded transition cursor-pointer flex items-center gap-1.5"
+                  >
+                    {copiedInstructions ? <><Check className="w-3.5 h-3.5" /> Copied Template</> : <><Copy className="w-3.5 h-3.5" /> Copy Full Template</>}
+                  </button>
+                </div>
+
+                <div className="p-4 bg-brand-navy-dark/20 border border-brand-navy-light rounded-md font-mono text-xs text-neutral-300 space-y-2 whitespace-pre-wrap">
+{`🚨 *SAFETYNET CITIZEN CRIME REPORTING INSTRUCTIONS* 🚨
+
+1️⃣ Save this WhatsApp number: ${twilioSandboxNumber}
+2️⃣ Send this message to connect: join ${sandboxName}
+3️⃣ Once joined, type your report description and location!
+
+Officer in charge: ${user?.username || 'Dispatcher'} ${user?.phoneNumber ? `(${user.phoneNumber})` : ''}
+Your report is automatically anonymized & routed to response units.`}
+                </div>
+              </div>
+
+              {/* Interactive Ingestion Simulator */}
+              <div className="p-6 bg-brand-navy border border-brand-navy-light rounded-lg shadow-sm space-y-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h4 className="text-xs font-bold text-brand-slate uppercase font-mono tracking-wider">
+                      Live Ingest Signal Test Simulator
+                    </h4>
+                    <p className="text-xs text-brand-slate-dark mt-1">
+                      Directly trigger a simulated citizen WhatsApp report to test your Render backend webhook and real-time STOMP feed.
+                    </p>
+                  </div>
+                  <button
+                    onClick={triggerWhatsAppSimulation}
+                    disabled={isSimulating}
+                    className="px-4 py-2.5 bg-brand-teal hover:bg-brand-teal/90 disabled:opacity-60 text-white text-xs font-bold font-mono rounded transition cursor-pointer flex items-center gap-2"
+                  >
+                    {isSimulating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+                    <span>{isSimulating ? 'Simulating Ingest...' : 'Send Test Signal'}</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* TAB 5: SYSTEM SETTINGS WITH NESTED SUB-PAGES */}
           {activeTab === 'settings' && (
             <div className="max-w-2xl bg-brand-navy border border-brand-navy-light rounded-lg p-6 shadow-sm space-y-6">
 
@@ -1185,6 +1316,60 @@ export const App: React.FC = () => {
                           className="text-xs px-3 py-1 font-mono font-bold bg-brand-teal/10 border border-brand-teal/20 rounded-md text-brand-teal cursor-pointer hover:bg-brand-teal/20 transition"
                         >
                           {sandboxName}
+                        </button>
+                      )}
+                    </div>
+                    <div className="flex justify-between items-center py-3 border-b border-brand-navy-light">
+                      <div>
+                        <span className="block font-bold text-sm text-brand-slate">Twilio Ingestion Phone Number</span>
+                        <span className="text-xs text-brand-slate-dark">Twilio Sandbox or dedicated business WhatsApp number.</span>
+                      </div>
+                      {editingTwilioNumber ? (
+                        <div className="flex items-center gap-2">
+                          <input
+                            type="text"
+                            value={twilioNumberInput}
+                            onChange={(e) => setTwilioNumberInput(e.target.value)}
+                            className="bg-brand-navy-dark/10 border border-brand-teal/40 rounded-md px-3 py-1 text-xs text-brand-slate font-mono focus:outline-none focus:border-brand-teal transition w-40"
+                            autoFocus
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') {
+                                setTwilioSandboxNumber(twilioNumberInput)
+                                setEditingTwilioNumber(false)
+                              } else if (e.key === 'Escape') {
+                                setTwilioNumberInput(twilioSandboxNumber)
+                                setEditingTwilioNumber(false)
+                              }
+                            }}
+                          />
+                          <button
+                            onClick={() => {
+                              setTwilioSandboxNumber(twilioNumberInput)
+                              setEditingTwilioNumber(false)
+                            }}
+                            className="px-2 py-1 bg-brand-teal/20 border border-brand-teal/30 rounded text-brand-teal text-[10px] font-bold font-mono cursor-pointer hover:bg-brand-teal/30 transition"
+                          >
+                            Save
+                          </button>
+                          <button
+                            onClick={() => {
+                              setTwilioNumberInput(twilioSandboxNumber)
+                              setEditingTwilioNumber(false)
+                            }}
+                            className="px-2 py-1 bg-brand-navy-dark/10 border border-brand-navy-light rounded text-brand-slate-dark text-[10px] font-bold font-mono cursor-pointer hover:text-brand-slate transition"
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                      ) : (
+                        <button
+                          onClick={() => {
+                            setTwilioNumberInput(twilioSandboxNumber)
+                            setEditingTwilioNumber(true)
+                          }}
+                          className="text-xs px-3 py-1 font-mono font-bold bg-brand-navy-dark/10 border border-brand-navy-light rounded-md text-brand-slate cursor-pointer hover:bg-brand-navy-dark/20 transition"
+                        >
+                          {twilioSandboxNumber}
                         </button>
                       )}
                     </div>

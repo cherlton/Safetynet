@@ -8,9 +8,10 @@ interface AppState {
   longitude: number | null;
   locationConsentGranted: boolean | null;
   incidents: Incident[];
-  activeTab: 'dashboard' | 'map' | 'reports' | 'notifications' | 'settings';
+  activeTab: 'dashboard' | 'map' | 'reports' | 'notifications' | 'settings' | 'channel';
   sidebarOpen: boolean;
   sandboxName: string;
+  twilioSandboxNumber: string;
   
   // Actions
   login: (user: User, token: string) => void;
@@ -19,9 +20,10 @@ interface AppState {
   setConsentGranted: (granted: boolean) => void;
   addIncident: (incident: Incident) => void;
   setIncidents: (incidents: Incident[]) => void;
-  setActiveTab: (tab: 'dashboard' | 'map' | 'reports' | 'notifications' | 'settings') => void;
+  setActiveTab: (tab: 'dashboard' | 'map' | 'reports' | 'notifications' | 'settings' | 'channel') => void;
   toggleSidebar: () => void;
   setSandboxName: (name: string) => void;
+  setTwilioSandboxNumber: (num: string) => void;
 }
 
 export const useStore = create<AppState>((set) => {
@@ -44,9 +46,10 @@ export const useStore = create<AppState>((set) => {
     longitude: null,
     locationConsentGranted: localStorage.getItem('safetynet_location_consent') === 'true' ? true : null,
     incidents: [],
-    activeTab: (localStorage.getItem('safetynet_last_active_tab') as 'dashboard' | 'map' | 'reports' | 'notifications' | 'settings') || 'dashboard',
+    activeTab: (localStorage.getItem('safetynet_last_active_tab') as 'dashboard' | 'map' | 'reports' | 'notifications' | 'settings' | 'channel') || 'dashboard',
     sidebarOpen: true,
     sandboxName: localStorage.getItem('safetynet_sandbox_name') || 'safetynet',
+    twilioSandboxNumber: localStorage.getItem('safetynet_twilio_number') || '+1 415 523 8886',
 
     login: (user, token) => {
       localStorage.setItem('safetynet_auth_token', token);
@@ -80,6 +83,10 @@ export const useStore = create<AppState>((set) => {
     setSandboxName: (name) => {
       localStorage.setItem('safetynet_sandbox_name', name);
       set({ sandboxName: name });
+    },
+    setTwilioSandboxNumber: (num) => {
+      localStorage.setItem('safetynet_twilio_number', num);
+      set({ twilioSandboxNumber: num });
     },
   };
 })

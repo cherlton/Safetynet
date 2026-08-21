@@ -2,7 +2,7 @@ import React from 'react'
 import { useStore } from '../store/useStore'
 import { 
   BarChart3, Map, FileText, Settings, LogOut,
-  ChevronLeft, Menu, Bell
+  ChevronLeft, Menu, Bell, MessageSquare
 } from 'lucide-react'
 
 export const Sidebar: React.FC = () => {
@@ -13,6 +13,7 @@ export const Sidebar: React.FC = () => {
     { id: 'dashboard' as const, label: 'Analytics Panel', icon: <BarChart3 className="w-4 h-4" /> },
     { id: 'map' as const, label: 'Predictive Heatmap', icon: <Map className="w-4 h-4" /> },
     { id: 'reports' as const, label: 'Anonymised Reports', icon: <FileText className="w-4 h-4" /> },
+    { id: 'channel' as const, label: 'WhatsApp Channel', icon: <MessageSquare className="w-4 h-4" /> },
     { id: 'notifications' as const, label: 'Notifications', icon: <Bell className="w-4 h-4" /> },
     { id: 'settings' as const, label: 'System Configuration', icon: <Settings className="w-4 h-4" /> }
   ]

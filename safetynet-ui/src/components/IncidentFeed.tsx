@@ -9,13 +9,26 @@ export const IncidentFeed: React.FC = () => {
   const [selectedIncident, setSelectedIncident] = useState<typeof incidents[0] | null>(null)
   const [mediaLightbox, setMediaLightbox] = useState(false)
 
+  const [scopeFilter, setScopeFilter] = useState<'ALL' | 'MINE'>('ALL')
+
   const filteredIncidents = incidents.filter((inc) => {
     const matchesSearch = inc.cleanText.toLowerCase().includes(searchTerm.toLowerCase()) ||
       inc.crimeType.toLowerCase().includes(searchTerm.toLowerCase()) ||
       (inc.reporterName && inc.reporterName.toLowerCase().includes(searchTerm.toLowerCase())) ||
       (inc.reporterLocation && inc.reporterLocation.toLowerCase().includes(searchTerm.toLowerCase()))
     const matchesSeverity = severityFilter === 'ALL' || inc.severity === severityFilter
-    return matchesSearch && matchesSeverity
+
+    // Data isolation / user scoping filter
+    let matchesScope = true
+    if (scopeFilter === 'MINE' && user) {
+      const userPhoneClean = (user.phoneNumber || '').replace(/\D/g, '')
+      const incPhoneClean = (inc.whatsappNumber || inc.reporterContact || '').replace(/\D/g, '')
+      const isMyPhone = userPhoneClean && incPhoneClean && (userPhoneClean === incPhoneClean || incPhoneClean.endsWith(userPhoneClean) || userPhoneClean.endsWith(incPhoneClean))
+      const isMyName = user.username && inc.reporterName && user.username.toLowerCase() === inc.reporterName.toLowerCase()
+      matchesScope = Boolean(isMyPhone || isMyName)
+    }
+
+    return matchesSearch && matchesSeverity && matchesScope
   })
 
   const getSeverityBadge = (level: number) => {
@@ -51,20 +64,35 @@ export const IncidentFeed: React.FC = () => {
             className="w-full bg-brand-navy-dark/10 border border-brand-navy-light rounded-md pl-20 pr-4 py-2.5 text-sm text-brand-slate focus:outline-none focus:border-brand-teal transition"
           />
         </div>
-        <div className="flex items-center gap-3">
-          <span className="text-xs text-brand-slate-dark font-mono uppercase">Danger:</span>
-          <select
-            value={severityFilter}
-            onChange={(e) => setSeverityFilter(e.target.value === 'ALL' ? 'ALL' : Number(e.target.value))}
-            className="bg-brand-navy border border-brand-navy-light rounded-md px-4 py-2.5 text-sm text-brand-slate focus:outline-none focus:border-brand-teal cursor-pointer"
-          >
-            <option value="ALL">All Levels</option>
-            <option value="1">Level 1 - Low</option>
-            <option value="2">Level 2</option>
-            <option value="3">Level 3 - Medium</option>
-            <option value="4">Level 4 - High</option>
-            <option value="5">Level 5 - Severe</option>
-          </select>
+        <div className="flex flex-wrap items-center gap-3">
+          {/* User Data Scope Filter */}
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-brand-slate-dark font-mono uppercase">Scope:</span>
+            <select
+              value={scopeFilter}
+              onChange={(e) => setScopeFilter(e.target.value as 'ALL' | 'MINE')}
+              className="bg-brand-navy border border-brand-navy-light rounded-md px-3 py-2 text-xs text-brand-slate focus:outline-none focus:border-brand-teal cursor-pointer"
+            >
+              <option value="ALL">🌐 All Community Incidents</option>
+              <option value="MINE">🔒 My Unit / Channel Reports</option>
+            </select>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-brand-slate-dark font-mono uppercase">Danger:</span>
+            <select
+              value={severityFilter}
+              onChange={(e) => setSeverityFilter(e.target.value === 'ALL' ? 'ALL' : Number(e.target.value))}
+              className="bg-brand-navy border border-brand-navy-light rounded-md px-3 py-2 text-xs text-brand-slate focus:outline-none focus:border-brand-teal cursor-pointer"
+            >
+              <option value="ALL">All Levels</option>
+              <option value="1">Level 1 - Low</option>
+              <option value="2">Level 2</option>
+              <option value="3">Level 3 - Medium</option>
+              <option value="4">Level 4 - High</option>
+              <option value="5">Level 5 - Severe</option>
+            </select>
+          </div>
         </div>
       </div>
 
